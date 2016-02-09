@@ -246,7 +246,7 @@ public class Application implements Runnable {
 				System.out.println("Prescan at articleId: "+articleId);
 				prevArticleId=articleId;
 			}
-		} while (failsInARow<100);
+		} while (failsInARow<1000);
 
 		System.out.println("CALCULATED URI LIST: (urls) "+urlList.size());
 		
