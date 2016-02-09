@@ -56,9 +56,6 @@ public class Application implements Runnable {
 	private void extractDataFromHtml(ArrayList<String> urlList,
 			ArrayList<Article> listOfArticles) {
 		
-		if (true) {
-			return;
-		}
 		HtmlCache.open();
 
 		System.err.println("PROCESSING HTML START: " + new Date());
