@@ -96,10 +96,9 @@ public class HtmlCache {
 		try {
 			ps=db.prepareStatement("select url from phoenix_html");
 			rs=ps.executeQuery();
-			rs.first();
-			do {
+			while (rs.next()) {
 				urls.add(rs.getString(1));
-			} while (rs.next());
+			};
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
