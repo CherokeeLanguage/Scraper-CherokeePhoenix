@@ -1,6 +1,7 @@
 package com.cherokeelessons.com.scraper.phoenix;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
@@ -20,6 +21,13 @@ import javax.swing.text.StyleConstants;
  *  line of the console
  *
  *  You can limit the number of lines to hold in the Document.
+ *  
+ */
+
+/**
+ * 
+ * @author Rob Camick
+ * {@link http://tips4java.wordpress.com/2008/11/08/message-console/}
  */
 public class MessageConsole
 {
@@ -46,6 +54,7 @@ public class MessageConsole
 		this.document = textComponent.getDocument();
 		this.isAppend = isAppend;
 		textComponent.setEditable( false );
+		textComponent.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 24));
 	}
 
 	/*
