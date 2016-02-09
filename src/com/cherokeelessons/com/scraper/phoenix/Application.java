@@ -235,6 +235,10 @@ public class Application implements Runnable {
 			if (httpExists(queryURI)) {
 				urlList.add(baseURI+queryURIA+String.valueOf(articleId));//+queryURIB);
 				failsInARow=0;
+				for (int ix=0; ix<100; ix++) {
+					articleId++;
+					urlList.add(baseURI+queryURIA+String.valueOf(articleId));//+queryURIB);
+				}
 			} else {
 				failsInARow++;
 			}
