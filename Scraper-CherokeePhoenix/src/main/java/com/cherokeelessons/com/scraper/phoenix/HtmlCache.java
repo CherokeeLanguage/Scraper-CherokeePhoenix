@@ -88,6 +88,37 @@ public class HtmlCache {
 		return list;
 	}
 	
+	public static boolean isRecent(){
+		PreparedStatement ps;
+		ResultSet rs;
+		try {
+			ps=db.prepareStatement("select timestampdiff('HOUR',NOW(),max(modified))<4 from phoenix_html");
+			rs=ps.executeQuery();
+			if (rs.first()) {
+				return rs.getBoolean(1);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	public static java.util.Date modified(){
+		PreparedStatement ps;
+		ResultSet rs;
+		try {
+			ps=db.prepareStatement("select max(modified) from phoenix_html");
+			rs=ps.executeQuery();
+			
+			if (rs.first()) {
+				return new java.util.Date(rs.getTimestamp(1).getTime());
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return new java.util.Date(0);
+	}
+	
 	public static ArrayList<String> allUrls(){
 		PreparedStatement ps;
 		ResultSet rs;

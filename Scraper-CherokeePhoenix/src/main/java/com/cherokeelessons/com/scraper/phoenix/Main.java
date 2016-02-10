@@ -16,7 +16,7 @@ public class Main {
 			
 			@Override
 			public Thread getApp(String... args) throws Exception {
-				return new Application(args);
+				return new Application();
 			}
 		};
 		EventQueue.invokeLater(new MainWindow(config, args));

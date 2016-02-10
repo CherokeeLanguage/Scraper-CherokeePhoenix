@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,14 +28,6 @@ public class Application extends Thread {
 
 	private String baseURI = "http://www.cherokeephoenix.org";
 	private String queryURIA = "/Article/Index/";
-
-	private String[] args;
-	private String destDir = "results";//set by cli option
-	
-	public Application(String[] args) {
-		super();
-		this.args = args;
-	}
 
 	@Override
 	public void run() {
@@ -62,7 +55,7 @@ public class Application extends Thread {
 		
 		extractDataFromHtml(urlList, articles);
 		System.err.println("Processing complete at " + new Date());
-//		System.exit(0);
+		System.exit(0);
 	}
 
 	private void extractDataFromHtml(List<String> urlList,
@@ -91,36 +84,39 @@ public class Application extends Thread {
 		
 		System.out.println("Found "+listOfArticles.size()+" Cherokee language articles.");
 		System.err.println("PROCESSING HTML STOPPED: " + new Date());
-		ArrayList<String> lines=new ArrayList<String>();
-		String[] aLines;
+		
+		Collections.reverse(listOfArticles);
+		
+		
+		StringBuilder corpus1 = new StringBuilder();
+		
 		for (int ix=0; ix<listOfArticles.size(); ix++){
-			lines.add("=========================================");
+			corpus1.append("=========================================\n");
 			Article b = listOfArticles.get(ix);
 			if (b.getTitle_chr().length()>0) {
-				lines.add(b.getTitle_chr());
-			} else {
-				lines.add(b.getTitle_en());
+				corpus1.append(b.getTitle_chr());
+				corpus1.append("\n");
 			}
-			lines.add("=========================================");
-			lines.add(b.getUri());
+			if (b.getTitle_en().length()>0){
+				corpus1.append(b.getTitle_en());
+				corpus1.append("\n");
+			}
+			corpus1.append("=========================================");
+			corpus1.append("\n");
+			corpus1.append(b.getUri());
+			corpus1.append("\n");
 			if (b.getDate().length()>0) {
-				lines.add("Date: "+b.getDate());
+				corpus1.append("Date: "+b.getDate());
+				corpus1.append("\n");
 			}
-			String c=b.getArticle_chr();
-			aLines=c.split("\n\n+");
-			for (int iy=0; iy<aLines.length; iy++) {
-				String text=aLines[iy];
-				text=text.replace("\n", " ");
-				text=text.replaceAll("\t", " ");
-				text=text.replaceAll(" +", " ");
-				text=text.trim();
-				lines.add(text);
-			}
-			lines.add("\n");
+//			corpus1.append(b.getArticle_chr());
+//			corpus1.append(b.getArticle_en());
+			corpus1.append(b.getArticle_dual());
+			corpus1.append("\n");
 		}
-		FileUtils.writeLines(new File("results/allArticles.txt"), "UTF-8", lines);
+		FileUtils.write(new File("results/allArticles.txt"), corpus1.toString(), Charset.forName("UTF-8"));
 		
-		lines.clear();
+		List<String> lines=new ArrayList<String>();
 		System.out.println("Saving URLS as an HTML document w/titles.");
 		lines.add("<html><head>");
 		lines.add("<meta charset=\"UTF-8\" lang=\"chr\" />");
@@ -139,7 +135,6 @@ public class Application extends Thread {
 		lines.add("<ol>");
 		String d;
 		String articleId;
-		Collections.reverse(listOfArticles);
 		for (Article article: listOfArticles) {
 			lines.add("<li><a href=\""+article.getUri()+"\">");
 			if (article.getDate().length()>1)  {
@@ -249,7 +244,7 @@ public class Application extends Thread {
 	
 	private List<String> loadSeedUrls() throws MalformedURLException, IOException {
 		System.err.println("Loading initial URLS: " + new Date());
-		ArrayList<String> urlList = new ArrayList<String>();
+		List<String> urlList = new ArrayList<>();
 		int articleId=1;
 		int prevArticleId=0;
 		int failsInARow=0;
@@ -273,6 +268,11 @@ public class Application extends Thread {
 				String number = StringUtils.substringAfterLast(href, "Article/index/");
 				maxId=Math.max(Integer.valueOf(number), maxId);
 			}
+		}
+		
+		if (maxId==articleId) {
+			System.out.println("\tUrl list seems up-to-date, skipping probe.");
+			return urlList;
 		}
 		
 		do {
