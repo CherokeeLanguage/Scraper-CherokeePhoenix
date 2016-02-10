@@ -47,7 +47,7 @@ dependencies {
 	compile 'org.jsoup:jsoup:1.8.3'
 	compile 'commons-io:commons-io:+'
 	
-	//compile project(':SimpleTextUi')
+	compile project(':SimpleTextUi')
 	
 	//compile 'org.languagetool:language-en:3.0'
 	//compile 'org.languagetool:languagetool-core:3.0'
