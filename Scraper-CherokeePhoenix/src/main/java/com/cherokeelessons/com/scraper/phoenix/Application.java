@@ -14,7 +14,7 @@ import java.util.Random;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
-public class Application implements Runnable {
+public class Application extends Thread {
 	final private long seconds = 1000;
 	final private long minutes = 60 * seconds;
 	final private long hours = 60 * minutes;
