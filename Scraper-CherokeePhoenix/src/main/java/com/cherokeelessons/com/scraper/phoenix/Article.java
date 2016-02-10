@@ -61,7 +61,7 @@ public class Article {
 		tmp = tmp.replaceAll("<.*?>", " ");
 		tmp = tmp.replaceAll("( *\n)+", "\n");
 		tmp = tmp.replaceAll(" +", " ");
-		return tmp;
+		return StringUtils.strip(tmp);
 	}
 
 	public void setArticle_en(String article_en) {
@@ -91,7 +91,7 @@ public class Article {
 	}
 
 	public String getDate() {
-		return date;
+		return StringUtils.strip(date);
 	}
 
 	public String getHtml() {
@@ -99,11 +99,11 @@ public class Article {
 	}
 
 	public String getTitle_chr() {
-		return title_chr;
+		return StringUtils.strip(title_chr);
 	}
 
 	public String getTitle_en() {
-		return title_en;
+		return StringUtils.strip(title_en);
 	}
 
 	public String getUri() {
@@ -187,7 +187,7 @@ public class Article {
 		tmp = tmp.replaceAll("<.*?>", " ");
 		tmp = tmp.replaceAll("( *\n)+", "\n");
 		tmp = tmp.replaceAll(" +", " ");
-		return tmp;
+		return StringUtils.strip(tmp);
 	}
 
 	public void setArticle_chr(String article_chr) {

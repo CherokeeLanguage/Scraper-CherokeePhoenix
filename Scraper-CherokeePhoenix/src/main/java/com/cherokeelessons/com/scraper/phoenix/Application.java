@@ -90,9 +90,8 @@ public class Application extends Thread {
 		
 		StringBuilder corpus1 = new StringBuilder();
 		
-		for (int ix=0; ix<listOfArticles.size(); ix++){
+		for (Article b: listOfArticles){
 			corpus1.append("=========================================\n");
-			Article b = listOfArticles.get(ix);
 			if (b.getTitle_chr().length()>0) {
 				corpus1.append(b.getTitle_chr());
 				corpus1.append("\n");
@@ -109,12 +108,36 @@ public class Application extends Thread {
 				corpus1.append("Date: "+b.getDate());
 				corpus1.append("\n");
 			}
-//			corpus1.append(b.getArticle_chr());
-//			corpus1.append(b.getArticle_en());
 			corpus1.append(b.getArticle_dual());
 			corpus1.append("\n");
 		}
 		FileUtils.write(new File("results/allArticles.txt"), corpus1.toString(), Charset.forName("UTF-8"));
+		
+		StringBuilder moses_en=new StringBuilder();
+		StringBuilder moses_chr=new StringBuilder();
+		
+		for (Article b: listOfArticles){
+			moses_en.append("--- ---\n");
+			moses_chr.append("--- ---\n");
+			if (b.getTitle_chr().length()>0 && b.getTitle_en().length()>0) {
+				moses_en.append(b.getTitle_en().replaceAll("\n+", " --- "));
+				moses_chr.append(b.getTitle_chr().replaceAll("\n+", " --- "));
+				moses_en.append("\n");
+				moses_chr.append("\n");
+			}
+			if (b.getDate().length()>0) {
+				moses_en.append(b.getDate().replaceAll("\n+", " --- "));
+				moses_chr.append(b.getDate().replaceAll("\n+", " --- "));
+				moses_en.append("\n");
+				moses_chr.append("\n");
+			}
+			moses_en.append(b.getArticle_en().replaceAll("\n+", " --- "));
+			moses_chr.append(b.getArticle_chr().replaceAll("\n+", " --- "));
+			moses_en.append("\n\n");
+			moses_chr.append("\n\n");
+		}
+		FileUtils.write(new File("results/phoenix.en"), moses_en.toString(), Charset.forName("UTF-8"));
+		FileUtils.write(new File("results/phoenix.chr4"), moses_chr.toString(), Charset.forName("UTF-8"));
 		
 		List<String> lines=new ArrayList<String>();
 		System.out.println("Saving URLS as an HTML document w/titles.");
