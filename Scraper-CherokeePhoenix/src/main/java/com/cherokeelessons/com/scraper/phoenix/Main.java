@@ -11,8 +11,7 @@ public class Main {
 		MainWindow.Config config = new Config() {
 			@Override
 			public String getApptitle() {
-				// TODO Auto-generated method stub
-				return null;
+				return "Scraper: Cherokee Phoenix";
 			}
 			
 			@Override

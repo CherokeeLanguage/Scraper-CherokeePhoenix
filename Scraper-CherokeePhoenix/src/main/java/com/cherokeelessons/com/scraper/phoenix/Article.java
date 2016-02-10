@@ -5,64 +5,87 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 public class Article {
+	private String article_en="";
+	public String getArticle_en() {
+		return article_en;
+	}
+
+	public void setArticle_en(String article_en) {
+		this.article_en = article_en;
+	}
+
+	private String article_chr="";
+	private String date="";
 	private String html="";
-	private String uri="";
-	private boolean isCherokee=false;
 	
+	private boolean isCherokee=false;
+
+	private String title_chr="";
+
+	private String title_en="";
+
+	private String uri="";
+	
+	private void setDate(Document jhtml) {
+		Element _date;
+		_date = jhtml.select("div.article-single-contents div.authors div.dateTime").first();
+		if (_date!=null) {
+			date=_date.text();
+		} else {
+			date="";
+		}
+	}
+	
+	public String getDate() {
+		return date;
+	}
+	public String getHtml() {
+		return html;
+	}
+	public String getTitle_chr() {
+		return title_chr;
+	}
+	public String getTitle_en() {
+		return title_en;
+	}
+
 	public String getUri() {
 		return uri;
 	}
 
-	public void setUri(String uri) {
-		this.uri = uri;
-	}
-
-	public String getHtml() {
-		return html;
-	}
-
-	public void setHtml(String html) {
-		this.html = html;
-		isCherokee=this.html.matches(".*[Ꭰ-Ᏼ].*");
-		Document jhtml = Jsoup.parse(html);
-		date = extractDate(jhtml);
-		setTitles(jhtml);
-		article = extractBody(jhtml);
-	}
-	//html body div#container div#content div.article div.messagebubble
-	private String extractDate(Document jhtml) {
-		Element date;
-		date = jhtml.select("div.article-single-contents div.dateTime").first();
-		if (date!=null) return date.text();
-		return "";
-	}
-	//html body div#container div#content div.article pre
-	private String extractBody(Document jhtml){
-		String text;
-		String raw;
-		Element article;
-		article=jhtml.select("div.article-single-contents div.html").first();
-		if (article!=null) {
-			if (article.html().contains("<")){
-				raw=article.toString();
-				raw=raw.replaceAll("<h.>", "");
-				raw=raw.replaceAll("</h.>", "\n\n");
-				raw=raw.replaceAll("<div>", "");
-				raw=raw.replaceAll("</div>", "\n\n");
-				raw=raw.replaceAll("<br */?>", "\n\n");
-				raw=raw.replaceAll("\t", " ");
-				article=Jsoup.parse(raw);
-			}
-			text=article.text();
-		} else {
-			text="";
-		}
-		text=text.replaceAll("\t", " ");
-		text=text.replaceAll(" +", " ");
-		text=text.trim();			
-		return text;
+	public boolean isCherokee(){
+		return isCherokee;
 	}
 	
+	public void setHtml(String html) {
+		this.html = html;
+		isCherokee=html.contains("class=\"translation\"");
+		Document jhtml = Jsoup.parse(html);
+		setDate(jhtml);
+		setTitles(jhtml);
+		setBody_en(jhtml);
+		setBody_chr(jhtml);
+	}
+
+	private void setBody_chr(Document jhtml) {
+		Element article;
+		article=jhtml.select("div.article-single div.article-single-contents div.translation").first();
+		if (article!=null) {
+			setArticle_chr(article.html());
+		} else {
+			setArticle_chr("");
+		}
+	}
+	private void setBody_en(Document jhtml) {
+		Element article;
+		//div.article-single div.article-single-contents div.translation
+		article=jhtml.select("div.article-single div.article-single-contents div.html").first();
+		if (article!=null) {
+			setArticle_en(article.html());
+		} else {
+			setArticle_en("");
+		}
+	}
 	private void setTitles(Document jhtml){
 		Element title;
 		title=jhtml.select("div.article-single h2").first();
@@ -70,33 +93,19 @@ public class Article {
 		else title_en="";
 		
 		title=jhtml.select("div.translation h2").first();
-		if (title!=null) title_en = title.text();
-		else title_en="";
-	}
-	
-	private String date="";
-	private String title_en="";
-	private String title_chr="";
-	private String article="";
-
-	public String getDate() {
-		return date;
+		if (title!=null) title_chr = title.text();
+		else title_chr="";
 	}
 
-	public String getTitle_en() {
-		return title_en;
-	}
-	
-	public String getTitle_chr() {
-		return title_chr;
+	public void setUri(String uri) {
+		this.uri = uri;
 	}
 
-	public String getArticle() {
-		return article;
+	public String getArticle_chr() {
+		return article_chr;
 	}
 
-	public boolean isCherokee(){
-		return isCherokee;
-//		 return article.replaceAll("[^Ꭰ-Ᏼ]", "").replace("ᏣᎳᎩ", "").length()>1;
+	public void setArticle_chr(String article_chr) {
+		this.article_chr = article_chr;
 	}	
 }
