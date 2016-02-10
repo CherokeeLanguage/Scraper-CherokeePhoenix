@@ -2,6 +2,7 @@ package com.cherokeelessons.com.scraper.phoenix;
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -14,6 +15,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 public class Application extends Thread {
 	final private long seconds = 1000;
@@ -46,8 +49,8 @@ public class Application extends Thread {
 		List<String> urlList;
 		List<Article> articles=new ArrayList<Article>();
 		
-//		urlList = loadSeedUrls();
-//		performHarvest(urlList);	
+		urlList = loadSeedUrls();
+		performHarvest(urlList);	
 		
 		HtmlCache.open();
 		urlList=HtmlCache.allUrls();
@@ -86,10 +89,8 @@ public class Application extends Thread {
 		}
 		HtmlCache.close();
 		
-		String saveFile="results/allArticles.txt";
 		System.out.println("Found "+listOfArticles.size()+" Cherokee language articles.");
 		System.err.println("PROCESSING HTML STOPPED: " + new Date());
-		System.out.println("Saving to disk as '"+saveFile+"'");
 		ArrayList<String> lines=new ArrayList<String>();
 		String[] aLines;
 		for (int ix=0; ix<listOfArticles.size(); ix++){
@@ -117,7 +118,7 @@ public class Application extends Thread {
 			}
 			lines.add("\n");
 		}
-		FileUtils.writeLines(new File(saveFile), "UTF-8", lines);
+		FileUtils.writeLines(new File("results/allArticles.txt"), "UTF-8", lines);
 		
 		lines.clear();
 		System.out.println("Saving URLS as an HTML document w/titles.");
@@ -158,11 +159,10 @@ public class Application extends Thread {
 		}
 		lines.add("</ol>");
 		lines.add("</body></html>");
-		saveFile="results/ᏣᎳᎩ ᏧᎴᎯᏌᏅᎯ --- ᏣᎳᎩ-ᏲᏁᎦ ᏗᎪᏪᎵ.html";
-		FileUtils.writeLines(new File(saveFile), "UTF-8", lines);
+		FileUtils.writeLines(new File("results/ᏣᎳᎩ ᏧᎴᎯᏌᏅᎯ --- ᏣᎳᎩ-ᏲᏁᎦ ᏗᎪᏪᎵ.html"), "UTF-8", lines);
 	}
 
-	private void performHarvest(ArrayList<String> urlList) {
+	private void performHarvest(List<String> urlList) {
 		HtmlCache.open();
 		Document details;
 		long startTime = System.currentTimeMillis();
@@ -190,9 +190,9 @@ public class Application extends Thread {
 				for (int retries = 0; retries < 3; retries++) {
 					try {
 						details = Jsoup.connect(filingUri).get();
-						HtmlCache.putHtml(filingUri, details.toString());
+						HtmlCache.putHtml(filingUri, details.outerHtml());
 //						newData=true;
-						html = details.toString();
+						html = details.outerHtml();
 						break;
 					} catch (IOException e) {
 						if (e.getMessage().startsWith("404 error")){
@@ -247,7 +247,7 @@ public class Application extends Thread {
 	    }
 	  }
 	
-	private ArrayList<String> loadSeedUrls() {
+	private List<String> loadSeedUrls() throws MalformedURLException, IOException {
 		System.err.println("Loading initial URLS: " + new Date());
 		ArrayList<String> urlList = new ArrayList<String>();
 		int articleId=1;
@@ -258,6 +258,22 @@ public class Application extends Thread {
 		HtmlCache.open();
 		articleId=HtmlCache.getMaxArticleId();
 		HtmlCache.close();
+		int maxId=0;
+		Document indexPage = Jsoup.parse(new URL("http://www.cherokeephoenix.org/"), 30000);
+		Elements alist = indexPage.select("a");
+		if (alist!=null) {
+			for (Element a: alist) {
+				if (!a.hasAttr("href")){
+					continue;
+				}
+				String href=a.attr("href");
+				if (!href.contains("Article/index/")){
+					continue;
+				}
+				String number = StringUtils.substringAfterLast(href, "Article/index/");
+				maxId=Math.max(Integer.valueOf(number), maxId);
+			}
+		}
 		
 		do {
 			articleId++;
@@ -265,18 +281,17 @@ public class Application extends Thread {
 			if (httpExists(queryURI)) {
 				urlList.add(baseURI+queryURIA+String.valueOf(articleId));//+queryURIB);
 				failsInARow=0;
-				for (int ix=0; ix<100; ix++) {
-					articleId++;
-					urlList.add(baseURI+queryURIA+String.valueOf(articleId));//+queryURIB);
-				}
+				maxId=Math.max(maxId, articleId+100);
 			} else {
-				failsInARow++;
+				if (articleId>maxId) {
+					failsInARow++;
+				}
 			}
 			if (prevArticleId+99<articleId){
 				System.out.println("Prescan at articleId: "+articleId);
 				prevArticleId=articleId;
 			}
-		} while (failsInARow<1000);
+		} while (failsInARow<100);
 
 		System.out.println("CALCULATED URI LIST: (urls) "+urlList.size());
 		
