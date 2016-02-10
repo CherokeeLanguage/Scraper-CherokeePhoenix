@@ -13,7 +13,7 @@ import java.util.Calendar;
 
 public class HtmlCache {
 	private final static String dbFile = "db"+File.separator+"htmlCache";
-	private final static String options = ""; //";FILE_LOCK=SOCKET";
+	private final static String options = ";AUTO_SERVER=TRUE"; //";FILE_LOCK=SOCKET";
 	
 	private static Connection makeConnection(){
 		

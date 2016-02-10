@@ -37,8 +37,8 @@ public class Application implements Runnable {
 		ArrayList<String> urlList;
 		ArrayList<Article> articles=new ArrayList<Article>();
 		
-		urlList = loadSeedUrls();
-		performHarvest(urlList);	
+//		urlList = loadSeedUrls();
+//		performHarvest(urlList);	
 		
 		HtmlCache.open();
 		urlList=HtmlCache.allUrls();
@@ -71,11 +71,13 @@ public class Application implements Runnable {
 			}
 			Article newArticle = new Article();
 			newArticle.setHtml(html);
-			if (!newArticle.ᏣᎳᎩᎢᎩ()){
+			if (!newArticle.isCherokee()){
 				continue;
 			}
 			newArticle.setUri(articleUri);
 			listOfArticles.add(newArticle);
+			
+			break;
 		}
 		HtmlCache.close();
 		
@@ -88,8 +90,8 @@ public class Application implements Runnable {
 		for (int ix=0; ix<listOfArticles.size(); ix++){
 			a.add("=========================================");
 			Article b = listOfArticles.get(ix);
-			if (b.getTitle().length()>0) {
-				a.add(b.getTitle());
+			if (b.getTitle_chr().length()>0) {
+				a.add(b.getTitle_chr());
 			} else {
 				a.add("Unable to extract title.");
 			}
@@ -125,7 +127,7 @@ public class Application implements Runnable {
 			if (u.getDate().length()>1) d="("+u.getDate()+") ";
 			else d="";
 			articleId="["+u.getUri().replaceAll("[^0-9]", "")+"] ";
-			a.add(articleId+d+u.getTitle());
+			a.add(articleId+d+u.getTitle_chr());
 			a.add("</a></li>");
 		}
 		a.add("</ol></body></html>");

@@ -1,0 +1,124 @@
+buildscript {
+    repositories {
+        maven { url 'http://repo.spring.io/plugins-release' }
+    }
+    dependencies {
+        classpath 'org.springframework.build.gradle:propdeps-plugin:0.0.6'
+    }
+}
+plugins {
+  id "us.kirchmeier.capsule" version "1.0.2"
+}
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'eclipse-wtp'
+
+version = '20160209'
+
+sourceCompatibility = 1.8
+compileJava.options.encoding = 'UTF-8'
+
+def RTJAR = '/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/rt.jar';
+if (new File(RTJAR).exists()) {
+	compileJava.options.bootClasspath=RTJAR
+}
+
+task fatjar(type: FatCapsule) {
+	//-Dfile.encoding=UTF-8
+  	archiveName 'Scraper-CherokeePhoenix.jar'
+	applicationClass 'com.cherokeelessons.com.scraper.phoenix.MainWindow'
+	capsuleManifest {
+    	jvmArgs = ['-Dfile.encoding=UTF-8']
+	}
+}
+
+repositories {
+    jcenter()
+}
+
+configurations {
+  provided
+}
+
+dependencies {
+	compile 'commons-cli:commons-cli:+'
+	compile 'org.apache.commons:commons-lang3:+'
+	compile 'com.h2database:h2:1.4.191'
+	compile 'org.jsoup:jsoup:1.8.3'
+	compile 'commons-io:commons-io:+'
+	
+	//compile project(':SimpleTextUi')
+	
+	//compile 'org.languagetool:language-en:3.0'
+	//compile 'org.languagetool:languagetool-core:3.0'
+}
+ 
+sourceSets {
+  main {
+    compileClasspath += configurations.provided
+  }
+  test {
+    compileClasspath += configurations.provided
+    runtimeClasspath += configurations.provided
+  }
+}
+
+task "create-dirs" << {
+	sourceSets*.java.srcDirs*.each { it.mkdirs() }
+	sourceSets*.resources.srcDirs*.each { it.mkdirs() }
+}
+
+eclipseJdt << {
+    File f = file('.settings/org.eclipse.core.resources.prefs')
+    f.write('eclipse.preferences.version=1\n')
+    f.append('encoding/<project>=utf-8')
+    f = file('.settings/org.eclipse.core.runtime.prefs')
+    f.write('eclipse.preferences.version=1\n')
+    f.append('line.separator=\\n\n')
+}
+
+project.afterEvaluate {
+	// use jre lib matching version used by project, not the workspace default
+	if (sourceCompatibility != null) {
+		def target = project.sourceCompatibility.toString()
+		def containerPrefix = "org.eclipse.jdt.launching.JRE_CONTAINER"
+		def containerSuffix
+		if (target =~ /1.[4-5]/) {
+			containerSuffix = '/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-' + target
+		} else if (target =~ /1.[6-8]/) {
+			containerSuffix = '/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-' + target
+		}
+		if (containerSuffix != null) {
+			project.eclipse.classpath {
+				containers.removeAll { it.startsWith(containerPrefix) }
+				containers.add(containerPrefix + containerSuffix)
+			}
+		}
+	}
+}
+
+eclipse {
+	project {
+		name = 'Scraper-CherokeePhoenix'
+		natures 'org.springsource.ide.eclipse.gradle.core.nature'
+		referencedProjects 'SimpleTextUi'
+	}
+
+	classpath {
+		plusConfigurations += [configurations.provided]
+		downloadSources = true
+		downloadJavadoc = true
+	}
+
+	jdt {
+		sourceCompatibility=1.8
+		targetCompatibility=1.8
+	}
+
+	wtp {
+		facet {
+			facets = []
+			facet name: 'jst.java', version: '1.8'
+		}
+	}
+}
