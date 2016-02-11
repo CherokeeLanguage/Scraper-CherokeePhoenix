@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 public class Article {
 	private String article_en = "";
@@ -122,6 +123,18 @@ public class Article {
 		setTitles(jhtml);
 		setBody_en(jhtml);
 		setBody_chr(jhtml);
+		setAudio_info(jhtml);
+	}
+
+	private void setAudio_info(Document jhtml) {
+		Element audio = jhtml.select("div.article-single-contents div.media div.audioArea").first();
+		if (audio==null) {
+			return;
+		}
+		audioUrl = audio.absUrl("src");
+		if (!StringUtils.isBlank(audioUrl)) {
+			hasAudio=true;
+		}
 	}
 
 	private void setBody_chr(Document jhtml) {
@@ -132,6 +145,16 @@ public class Article {
 		} else {
 			setArticle_chr("");
 		}
+	}
+	
+	private String audioUrl="";
+	public String getAudioUrl() {
+		return audioUrl;
+	}
+
+	private boolean hasAudio=false;
+	public boolean hasAudio(){
+		return hasAudio;
 	}
 
 	private void setBody_en(Document jhtml) {
