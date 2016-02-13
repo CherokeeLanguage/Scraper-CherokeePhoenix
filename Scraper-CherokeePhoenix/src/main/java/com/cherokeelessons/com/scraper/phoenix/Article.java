@@ -117,7 +117,7 @@ public class Article {
 
 	public void setHtml(String html) {
 		this.html = html;
-		isCherokee = html.contains("class=\"translation\"");
+		isCherokee = html.contains("class=\"translation\"") || html.contains("ᏣᎳᎩ");
 		Document jhtml = Jsoup.parse(html);
 		setDate(jhtml);
 		setTitles(jhtml);
