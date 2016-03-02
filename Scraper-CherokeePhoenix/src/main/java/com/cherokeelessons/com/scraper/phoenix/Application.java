@@ -314,17 +314,8 @@ public class Application extends Thread {
 			if (httpExists(queryURI)) {
 				urlList.add(baseURI+queryURIA+String.valueOf(articleId));//+queryURIB);
 				failsInARow=0;
-				maxId=Math.max(maxId, articleId+100);
-			} else {
-				if (articleId>maxId) {
-					failsInARow++;
-				}
 			}
-			if (prevArticleId+99<articleId){
-				System.out.println("Prescan at articleId: "+articleId);
-				prevArticleId=articleId;
-			}
-		} while (failsInARow<100);
+		} while (articleId<maxId);
 
 		System.out.println("CALCULATED URI LIST: (urls) "+urlList.size());
 		
