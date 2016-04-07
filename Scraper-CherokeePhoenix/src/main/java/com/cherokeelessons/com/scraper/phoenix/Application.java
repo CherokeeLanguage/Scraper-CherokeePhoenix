@@ -36,6 +36,7 @@ public class Application extends Thread {
 			_run();
 		} catch (IOException e) {
 			e.printStackTrace();
+			System.exit(-1);
 		}
 	}
 
@@ -56,7 +57,6 @@ public class Application extends Thread {
 		
 		extractDataFromHtml(urlList, articles);
 		System.err.println("Processing complete at " + new Date());
-		System.exit(0);
 	}
 
 	private void extractDataFromHtml(List<String> urlList,
