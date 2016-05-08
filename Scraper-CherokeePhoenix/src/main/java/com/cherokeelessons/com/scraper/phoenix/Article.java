@@ -1,12 +1,16 @@
 package com.cherokeelessons.com.scraper.phoenix;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
+
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
-public class Article {
+public class Article implements Comparable<Article>{
 	private String article_en = "";
 	
 	public String getArticle_dual(){
@@ -82,17 +86,34 @@ public class Article {
 	private String uri = "";
 
 	private void setDate(Document jhtml) {
-		Element _date;
-		_date = jhtml.select("div.article-single-contents div.authors div.dateTime").first();
-		if (_date != null) {
-			date = _date.text();
+		Element html_date;
+		html_date = jhtml.select("div.authors div.dateTime").first();
+		if (html_date != null) {
+			date = html_date.text();
 		} else {
 			date = "";
 		}
+		SimpleDateFormat sdf = new SimpleDateFormat("M/d/yyyy hh:mm a");
+		sdf.setTimeZone(TimeZone.getTimeZone("US/Central"));
+		sdf.setLenient(false);
+		try {
+			_date=sdf.parse(date);
+		} catch (ParseException e) {
+			System.err.println("date: "+String.valueOf(date)
+			+", "+String.valueOf(html_date)
+			+", "+getArticleId());
+			throw new RuntimeException(e);
+		}
 	}
-
+	
+	private Date _date;
+	
 	public String getDate() {
 		return StringUtils.strip(date);
+	}
+	
+	public Date getJavaDate() {
+		return _date;
 	}
 
 	public String getHtml() {
@@ -185,6 +206,19 @@ public class Article {
 
 	public void setUri(String uri) {
 		this.uri = uri;
+		setId(uri);
+	}
+	
+	private void setId(String uri) {
+		articleId=Integer.parseInt(uri.replaceAll(".*/([0-9]+)", "$1"));
+	}
+	private int articleId;
+	public int getArticleId() {
+		return articleId;
+	}
+
+	public void setArticleId(int articleId) {
+		this.articleId = articleId;
 	}
 
 	public String getArticle_chr() {
@@ -215,5 +249,13 @@ public class Article {
 
 	public void setArticle_chr(String article_chr) {
 		this.article_chr = article_chr;
+	}
+
+	@Override
+	public int compareTo(Article o) {
+		if (!_date.equals(o._date)) {
+			return _date.compareTo(o._date);
+		}
+		return articleId - o.articleId;
 	}
 }

@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Random;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -42,8 +41,6 @@ public class Application extends Thread {
 
 	private void _run() throws IOException {
 		List<String> urlList;
-		List<Article> articles=new ArrayList<Article>();
-		
 		urlList = loadSeedUrls();
 		performHarvest(urlList);	
 		
@@ -55,18 +52,17 @@ public class Application extends Thread {
 		System.out.println("Processing "+urlList.size()+" cached articles.");
 		System.err.println("========================================================");
 		
-		extractDataFromHtml(urlList, articles);
+		extractDataFromHtml(urlList);
 		System.err.println("Processing complete at " + new Date());
 	}
 
-	private void extractDataFromHtml(List<String> urlList,
-			List<Article> listOfArticles) throws IOException {
+	private void extractDataFromHtml(List<String> urlList) throws IOException {
 		
 		HtmlCache.open();
 
 		System.err.println("PROCESSING HTML START: " + new Date());
 		int size=urlList.size();
-		
+		List<Article> listOfArticles=new ArrayList<>();
 		for (int ix = 0; ix<size; ix++) {
 			String articleUri = urlList.get(ix);
 			String html = HtmlCache.getHtml(articleUri);
@@ -74,42 +70,43 @@ public class Application extends Thread {
 				continue;
 			}
 			Article newArticle = new Article();
+			newArticle.setUri(articleUri);
 			newArticle.setHtml(html);
 			if (!newArticle.isCherokee()){
 				continue;
 			}
-			newArticle.setUri(articleUri);
 			listOfArticles.add(newArticle);
 		}
 		HtmlCache.close();
 		
+		Collections.sort(listOfArticles);
+		Collections.reverse(listOfArticles);
+		
 		System.out.println("Found "+listOfArticles.size()+" Cherokee language articles.");
 		System.err.println("PROCESSING HTML STOPPED: " + new Date());
-		
-		Collections.reverse(listOfArticles);
 		
 		
 		StringBuilder corpus1 = new StringBuilder();
 		
-		for (Article b: listOfArticles){
+		for (Article article: listOfArticles){
 			corpus1.append("=========================================\n");
-			if (b.getTitle_chr().length()>0) {
-				corpus1.append(b.getTitle_chr());
+			if (article.getTitle_chr().length()>0) {
+				corpus1.append(article.getTitle_chr());
 				corpus1.append("\n");
 			}
-			if (b.getTitle_en().length()>0){
-				corpus1.append(b.getTitle_en());
+			if (article.getTitle_en().length()>0){
+				corpus1.append(article.getTitle_en());
 				corpus1.append("\n");
 			}
 			corpus1.append("=========================================");
 			corpus1.append("\n");
-			corpus1.append(b.getUri());
+			corpus1.append(article.getUri());
 			corpus1.append("\n");
-			if (b.getDate().length()>0) {
-				corpus1.append("Date: "+b.getDate());
+			if (article.getDate().length()>0) {
+				corpus1.append("Date: "+article.getDate());
 				corpus1.append("\n");
 			}
-			corpus1.append(b.getArticle_dual());
+			corpus1.append(article.getArticle_dual());
 			corpus1.append("\n");
 		}
 		FileUtils.write(new File("results/allArticles.txt"), corpus1.toString(), Charset.forName("UTF-8"));
@@ -117,23 +114,23 @@ public class Application extends Thread {
 		StringBuilder moses_en=new StringBuilder();
 		StringBuilder moses_chr=new StringBuilder();
 		
-		for (Article b: listOfArticles){
+		for (Article article: listOfArticles){
 			moses_en.append("--- ---\n");
 			moses_chr.append("--- ---\n");
-			if (b.getTitle_chr().length()>0 && b.getTitle_en().length()>0) {
-				moses_en.append(b.getTitle_en().replaceAll("\n+", " --- "));
-				moses_chr.append(b.getTitle_chr().replaceAll("\n+", " --- "));
+			if (article.getTitle_chr().length()>0 && article.getTitle_en().length()>0) {
+				moses_en.append(article.getTitle_en().replaceAll("\n+", " --- "));
+				moses_chr.append(article.getTitle_chr().replaceAll("\n+", " --- "));
 				moses_en.append("\n");
 				moses_chr.append("\n");
 			}
-			if (b.getDate().length()>0) {
-				moses_en.append(b.getDate().replaceAll("\n+", " --- "));
-				moses_chr.append(b.getDate().replaceAll("\n+", " --- "));
+			if (article.getDate().length()>0) {
+				moses_en.append(article.getDate().replaceAll("\n+", " --- "));
+				moses_chr.append(article.getDate().replaceAll("\n+", " --- "));
 				moses_en.append("\n");
 				moses_chr.append("\n");
 			}
-			moses_en.append(b.getArticle_en().replaceAll("\n+", " --- "));
-			moses_chr.append(b.getArticle_chr().replaceAll("\n+", " --- "));
+			moses_en.append(article.getArticle_en().replaceAll("\n+", " --- "));
+			moses_chr.append(article.getArticle_chr().replaceAll("\n+", " --- "));
 			moses_en.append("\n\n");
 			moses_chr.append("\n\n");
 		}
@@ -173,7 +170,7 @@ public class Application extends Thread {
 			} else { 
 				d="";
 			}
-			articleId=" ["+article.getUri().replaceAll("[^0-9]", "")+"]";
+			articleId=" ["+article.getArticleId()+"]";
 			
 			lines.add("<li><a href=\""+article.getUri()+"\">");
 			lines.add(title);
@@ -304,7 +301,7 @@ public class Application extends Thread {
 		}
 		
 		if (maxId==articleId) {
-			System.out.println("\tUrl list seems up-to-date, skipping probe.");
+			System.out.println("\tUrl list seems up-to-date, skipping...");
 			return urlList;
 		}
 		
