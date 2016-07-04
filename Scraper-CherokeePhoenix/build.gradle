@@ -26,7 +26,7 @@ if (new File(RTJAR).exists()) {
 task fatjar(type: FatCapsule) {
 	//-Dfile.encoding=UTF-8
   	archiveName 'Scraper-CherokeePhoenix.jar'
-	applicationClass 'com.cherokeelessons.com.scraper.phoenix.MainWindow'
+	applicationClass 'com.cherokeelessons.com.scraper.phoenix.Main'
 	capsuleManifest {
     	jvmArgs = ['-Dfile.encoding=UTF-8']
 	}
