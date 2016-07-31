@@ -43,7 +43,7 @@ dependencies {
 	compile 'org.jsoup:jsoup:1.8.+'
 	compile 'commons-io:commons-io:+'
 	
-	compile 'com.github.michae-joyner:SimpleTextUi:-SNAPSHOT'
+	compile 'com.github.michael-joyner:SimpleTextUi:-SNAPSHOT'
 }
  
 sourceSets {
