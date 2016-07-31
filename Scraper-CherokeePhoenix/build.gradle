@@ -1,19 +1,14 @@
-buildscript {
-    repositories {
-        maven { url 'http://repo.spring.io/plugins-release' }
-    }
-    dependencies {
-        classpath 'org.springframework.build.gradle:propdeps-plugin:0.0.6'
-    }
-}
 plugins {
   id "us.kirchmeier.capsule" version "1.0.2"
 }
 apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'eclipse-wtp'
+apply plugin: 'maven'
 
-version = '20160209'
+group "com.github.michael-joyner"
+
+version = '20160731'
 
 sourceCompatibility = 1.8
 compileJava.options.encoding = 'UTF-8'
@@ -34,6 +29,7 @@ task fatjar(type: FatCapsule) {
 
 repositories {
     jcenter()
+    maven { url "https://jitpack.io" }
 }
 
 configurations {
@@ -43,14 +39,11 @@ configurations {
 dependencies {
 	compile 'commons-cli:commons-cli:+'
 	compile 'org.apache.commons:commons-lang3:+'
-	compile 'com.h2database:h2:1.4.191'
-	compile 'org.jsoup:jsoup:1.8.3'
+	compile 'com.h2database:h2:1.4.+'
+	compile 'org.jsoup:jsoup:1.8.+'
 	compile 'commons-io:commons-io:+'
 	
-	compile project(':SimpleTextUi')
-	
-	//compile 'org.languagetool:language-en:3.0'
-	//compile 'org.languagetool:languagetool-core:3.0'
+	compile 'com.github.michae-joyner:SimpleTextUi:-SNAPSHOT'
 }
  
 sourceSets {
@@ -101,7 +94,7 @@ eclipse {
 	project {
 		name = 'Scraper-CherokeePhoenix'
 		natures 'org.eclipse.buildship.core.gradleprojectnature'
-		referencedProjects 'SimpleTextUi'
+		//referencedProjects 'SimpleTextUi'
 	}
 
 	classpath {
