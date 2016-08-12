@@ -2,8 +2,9 @@ package com.cherokeelessons.com.scraper.phoenix;
 
 import java.awt.EventQueue;
 
-import com.newsrx.gui.MainWindow;
-import com.newsrx.gui.MainWindow.Config;
+import com.cherokeelessons.gui.MainWindow;
+import com.cherokeelessons.gui.MainWindow.Config;
+
 
 public class Main {
 
