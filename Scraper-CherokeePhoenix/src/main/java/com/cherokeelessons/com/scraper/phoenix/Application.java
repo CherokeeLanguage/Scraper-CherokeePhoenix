@@ -1,4 +1,5 @@
 package com.cherokeelessons.com.scraper.phoenix;
+import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -20,6 +21,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 public class Application extends Thread {
+	private static final File HTML_OUTPUT_REPORT = new File("results/ᏣᎳᎩ ᏧᎴᎯᏌᏅᎯ --- ᏣᎳᎩ-ᏲᏁᎦ ᏗᎪᏪᎵ.html.odt");
 	final private long seconds = 1000;
 	final private long minutes = 60 * seconds;
 	final private long hours = 60 * minutes;
@@ -42,7 +44,11 @@ public class Application extends Thread {
 	private void _run() throws IOException {
 		List<String> urlList;
 		urlList = loadSeedUrls();
-		performHarvest(urlList);	
+		HtmlCache.open();
+		HtmlCache.resetMaybeBadScrapes();
+		urlList.addAll(HtmlCache.forRescraping());
+		HtmlCache.close();
+		performHarvest(urlList);
 		
 		HtmlCache.open();
 		urlList=HtmlCache.allUrls();
@@ -54,6 +60,8 @@ public class Application extends Thread {
 		
 		extractDataFromHtml(urlList);
 		System.err.println("Processing complete at " + new Date());
+//		Desktop.getDesktop().open(HTML_OUTPUT_REPORT);
+		Desktop.getDesktop().open(HTML_OUTPUT_REPORT.getParentFile());
 	}
 
 	private void extractDataFromHtml(List<String> urlList) throws IOException {
@@ -184,7 +192,7 @@ public class Application extends Thread {
 		}
 		lines.add("</ol>");
 		lines.add("</body></html>");
-		FileUtils.writeLines(new File("results/ᏣᎳᎩ ᏧᎴᎯᏌᏅᎯ --- ᏣᎳᎩ-ᏲᏁᎦ ᏗᎪᏪᎵ.html"), "UTF-8", lines);
+		FileUtils.writeLines(HTML_OUTPUT_REPORT, "UTF-8", lines);
 	}
 
 	private void performHarvest(List<String> urlList) {
@@ -301,7 +309,7 @@ public class Application extends Thread {
 		}
 		
 		if (maxId==articleId) {
-			System.out.println("\tUrl list seems up-to-date, skipping...");
+			System.out.println("\tUrl list seems up-to-date.");
 			return urlList;
 		}
 		

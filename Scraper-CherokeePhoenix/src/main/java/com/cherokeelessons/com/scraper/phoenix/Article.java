@@ -10,31 +10,31 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-public class Article implements Comparable<Article>{
+public class Article implements Comparable<Article> {
 	private String article_en = "";
-	
-	public String getArticle_dual(){
+
+	public String getArticle_dual() {
 		String en = StringUtils.strip(getArticle_en());
 		String chr = StringUtils.strip(getArticle_chr());
-		
-		String unmatched = "\n"+chr+"\n\n"+en+"\n";
-		if (StringUtils.countMatches(en, "\n")!=StringUtils.countMatches(chr, "\n")) {
+
+		String unmatched = "\n" + chr + "\n\n" + en + "\n";
+		if (StringUtils.countMatches(en, "\n") != StringUtils.countMatches(chr, "\n")) {
 			return unmatched;
 		}
-		
-		if (StringUtils.countMatches(en, "\n")<2){
+
+		if (StringUtils.countMatches(en, "\n") < 2) {
 			return unmatched;
 		}
-		
+
 		String[] a_en = StringUtils.split(en, "\n");
 		String[] a_chr = StringUtils.split(chr, "\n");
-		
-		if (a_en.length!=a_chr.length) {
+
+		if (a_en.length != a_chr.length) {
 			return unmatched;
 		}
-		
+
 		StringBuilder sb = new StringBuilder();
-		for (int i=0; i<a_en.length; i++) {
+		for (int i = 0; i < a_en.length; i++) {
 			sb.append("\n");
 			sb.append(a_chr[i]);
 			sb.append("\n");
@@ -47,18 +47,18 @@ public class Article implements Comparable<Article>{
 	public String getArticle_en() {
 		String tmp = article_en;
 		tmp = tmp.replaceAll("<!-- .*?-->", "");
-		
+
 		tmp = tmp.replaceAll("<td .*?>.*?</td>", "");
 		tmp = tmp.replaceAll("<tr .*?>.*?</tr>", "");
 		tmp = tmp.replaceAll("<tbody .*?>.*?</tbody>", "");
 		tmp = tmp.replaceAll("<thead.*?>.*?</thead.*?>", "");
 		tmp = tmp.replaceAll("<table .*?>.*?</table>", "");
-		
+
 		tmp = tmp.replace("</p>", "\n");
 		tmp = tmp.replace("</div>", "\n");
 		tmp = tmp.replace("<br/>", "\n");
 		tmp = tmp.replace("<br>", "\n");
-		
+
 		tmp = tmp.replace("&nbsp;", " ");
 		tmp = tmp.replaceAll("<h5>.*</h5>", " ");
 		tmp = tmp.replaceAll("<h2>.*</h2>", " ");
@@ -97,21 +97,20 @@ public class Article implements Comparable<Article>{
 		sdf.setTimeZone(TimeZone.getTimeZone("US/Central"));
 		sdf.setLenient(false);
 		try {
-			_date=sdf.parse(date);
+			_date = sdf.parse(date);
 		} catch (ParseException e) {
-			System.err.println("date: "+String.valueOf(date)
-			+", "+String.valueOf(html_date)
-			+", "+getArticleId());
-			throw new RuntimeException(e);
+			String message = "MISSING/BAD DATE: " + getArticleId() + "=> "
+					+jhtml.select("div.authors").html();
+			throw new RuntimeException(message);
 		}
 	}
-	
+
 	private Date _date;
-	
+
 	public String getDate() {
 		return StringUtils.strip(date);
 	}
-	
+
 	public Date getJavaDate() {
 		return _date;
 	}
@@ -149,12 +148,12 @@ public class Article implements Comparable<Article>{
 
 	private void setAudio_info(Document jhtml) {
 		Element audio = jhtml.select("div.article-single-contents div.media div.audioArea").first();
-		if (audio==null) {
+		if (audio == null) {
 			return;
 		}
 		audioUrl = audio.absUrl("src");
 		if (!StringUtils.isBlank(audioUrl)) {
-			hasAudio=true;
+			hasAudio = true;
 		}
 	}
 
@@ -167,14 +166,16 @@ public class Article implements Comparable<Article>{
 			setArticle_chr("");
 		}
 	}
-	
-	private String audioUrl="";
+
+	private String audioUrl = "";
+
 	public String getAudioUrl() {
 		return audioUrl;
 	}
 
-	private boolean hasAudio=false;
-	public boolean hasAudio(){
+	private boolean hasAudio = false;
+
+	public boolean hasAudio() {
 		return hasAudio;
 	}
 
@@ -208,11 +209,13 @@ public class Article implements Comparable<Article>{
 		this.uri = uri;
 		setId(uri);
 	}
-	
+
 	private void setId(String uri) {
-		articleId=Integer.parseInt(uri.replaceAll(".*/([0-9]+)", "$1"));
+		articleId = Integer.parseInt(uri.replaceAll(".*/([0-9]+)", "$1"));
 	}
+
 	private int articleId;
+
 	public int getArticleId() {
 		return articleId;
 	}
@@ -223,20 +226,20 @@ public class Article implements Comparable<Article>{
 
 	public String getArticle_chr() {
 		String tmp = article_chr;
-		
+
 		tmp = tmp.replaceAll("<!-- .*?-->", "");
-		
+
 		tmp = tmp.replaceAll("<td .*?>.*?</td>", "");
 		tmp = tmp.replaceAll("<tr .*?>.*?</tr>", "");
 		tmp = tmp.replaceAll("<tbody .*?>.*?</tbody>", "");
 		tmp = tmp.replaceAll("<thead.*?>.*?</thead.*?>", "");
 		tmp = tmp.replaceAll("<table .*?>.*?</table>", "");
-		
+
 		tmp = tmp.replace("</p>", "\n");
 		tmp = tmp.replace("</div>", "\n");
 		tmp = tmp.replace("<br/>", "\n");
 		tmp = tmp.replace("<br>", "\n");
-		
+
 		tmp = tmp.replace("&nbsp;", " ");
 		tmp = tmp.replaceAll("<h5>.*</h5>", " ");
 		tmp = tmp.replaceAll("<h2>.*</h2>", " ");
