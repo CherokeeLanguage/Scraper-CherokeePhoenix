@@ -60,8 +60,12 @@ public class Application extends Thread {
 		
 		extractDataFromHtml(urlList);
 		System.err.println("Processing complete at " + new Date());
-//		Desktop.getDesktop().open(HTML_OUTPUT_REPORT);
+		Desktop.getDesktop().open(HTML_OUTPUT_REPORT);
 		Desktop.getDesktop().open(HTML_OUTPUT_REPORT.getParentFile());
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+		}
 	}
 
 	private void extractDataFromHtml(List<String> urlList) throws IOException {
