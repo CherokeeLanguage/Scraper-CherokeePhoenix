@@ -1,6 +1,6 @@
 #!/bin/bash
 
 cd "$(dirname "$0")"
-gradle clean build -xtest
+gradle clean build fatjar -xtest
 java -jar build/libs/Scraper-CherokeePhoenix.jar
 
