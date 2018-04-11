@@ -21,7 +21,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 public class Application extends Thread {
-	private static final File HTML_OUTPUT_REPORT = new File("results/ᏣᎳᎩ ᏧᎴᎯᏌᏅᎯ --- ᏣᎳᎩ-ᏲᏁᎦ ᏗᎪᏪᎵ.html.odt");
+	private static final File HTML_OUTPUT_REPORT = new File("results/ᏣᎳᎩ ᏧᎴᎯᏌᏅᎯ --- ᏣᎳᎩ-ᏲᏁᎦ ᏗᎪᏪᎵ.html");
 	final private long seconds = 1000;
 	final private long minutes = 60 * seconds;
 	final private long hours = 60 * minutes;
