@@ -12,6 +12,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -43,7 +45,7 @@ public class Application extends Thread {
 
 	private void _run() throws IOException {
 		List<String> urlList;
-		urlList = loadSeedUrls();
+		urlList = new ArrayList<>(loadSeedUrls());
 		HtmlCache.open();
 		HtmlCache.resetMaybeBadScrapes();
 		urlList.addAll(HtmlCache.forRescraping());
@@ -284,12 +286,12 @@ public class Application extends Thread {
 	    }
 	  }
 	
-	private List<String> loadSeedUrls() throws MalformedURLException, IOException {
+	private Set<String> loadSeedUrls() throws MalformedURLException, IOException {
 		System.err.println("Loading initial URLS: " + new Date());
-		List<String> urlList = new ArrayList<>();
+		Set<String> urlList = new TreeSet<>();
 		int articleId=1;
-		int prevArticleId=0;
-		int failsInARow=0;
+//		int prevArticleId=0;
+//		int failsInARow=0;
 		String queryURI;
 		
 		HtmlCache.open();
@@ -311,33 +313,25 @@ public class Application extends Thread {
 				maxId=Math.max(Integer.valueOf(number), maxId);
 			}
 		}
+		System.out.println(" - home page shows max id of: "+maxId);
 		
 		if (maxId==articleId) {
 			System.out.println("\tUrl list seems up-to-date.");
 			return urlList;
 		}
 		
+		System.out.println(" - scanning for new valid article ids");
 		do {
 			articleId++;
 			queryURI = baseURI+queryURIA+String.valueOf(articleId);//+queryURIB;
 			if (httpExists(queryURI)) {
 				urlList.add(baseURI+queryURIA+String.valueOf(articleId));//+queryURIB);
-				failsInARow=0;
+//				failsInARow=0;
+				System.out.println(" - articleId: "+articleId);
 			}
 		} while (articleId<maxId);
 
 		System.out.println("CALCULATED URI LIST: (urls) "+urlList.size());
-		
-		System.err.println("Sorting and deduping URLS: " + new Date());
-		// sort the list
-		Collections.sort(urlList);
-		// dedupe the sorted list
-		for (int ix = urlList.size() - 1; ix > 0; ix--) {
-			if (urlList.get(ix).equals(urlList.get(ix - 1))) {
-				urlList.remove(ix);
-			}
-		}
-
 		return urlList;
 	}
 	
