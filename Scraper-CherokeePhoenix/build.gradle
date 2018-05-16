@@ -8,7 +8,7 @@ apply plugin: 'maven'
 
 group "com.github.michael-joyner"
 
-version = '20160731'
+version = '20180516'
 
 sourceCompatibility = 1.8
 compileJava.options.encoding = 'UTF-8'
@@ -40,7 +40,7 @@ dependencies {
 	compile 'commons-cli:commons-cli:+'
 	compile 'org.apache.commons:commons-lang3:+'
 	compile 'com.h2database:h2:1.4.+'
-	compile 'org.jsoup:jsoup:1.10.+'
+	compile 'org.jsoup:jsoup:1.11.+'
 	compile 'commons-io:commons-io:+'
 	
 	compile 'com.github.CherokeeLanguage:SimpleTextUi:-SNAPSHOT'
