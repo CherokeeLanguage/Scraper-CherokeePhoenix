@@ -30,8 +30,8 @@ public class Application extends Thread {
 
 	private final long timeLimit = 4 * hours; // in ms
 
-	private String baseURI = "http://www.cherokeephoenix.org";
-	private String queryURIA = "/Article/Index/";
+	private static final String BASE_URL = "http://www.cherokeephoenix.org";
+	private static final String ARTICLE_PATH = "/Article/Index/";
 
 	@Override
 	public void run() {
@@ -290,8 +290,6 @@ public class Application extends Thread {
 		System.err.println("Loading initial URLS: " + new Date());
 		Set<String> urlList = new TreeSet<>();
 		int articleId=1;
-//		int prevArticleId=0;
-//		int failsInARow=0;
 		String queryURI;
 		
 		HtmlCache.open();
@@ -323,10 +321,9 @@ public class Application extends Thread {
 		System.out.println(" - scanning for new valid article ids");
 		do {
 			articleId++;
-			queryURI = baseURI+queryURIA+String.valueOf(articleId);//+queryURIB;
+			queryURI = BASE_URL+ARTICLE_PATH+String.valueOf(articleId);//+queryURIB;
 			if (httpExists(queryURI)) {
-				urlList.add(baseURI+queryURIA+String.valueOf(articleId));//+queryURIB);
-//				failsInARow=0;
+				urlList.add(BASE_URL+ARTICLE_PATH+String.valueOf(articleId));//+queryURIB);
 				System.out.println(" - articleId: "+articleId);
 			}
 		} while (articleId<maxId);
