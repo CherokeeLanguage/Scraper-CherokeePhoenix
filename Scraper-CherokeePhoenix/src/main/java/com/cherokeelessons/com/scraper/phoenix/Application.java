@@ -259,8 +259,9 @@ public class Application extends Thread {
 			String text = output.toString();
 			//strip tags
 			text = text.replaceAll("<[^<>]*>", "");
-			text = StringEscapeUtils.unescapeHtml4(text);
+			//text = StringEscapeUtils.unescapeHtml4(text);
 			text = text.replaceAll("[^Ꭰ-Ᏼ\\s]", "");
+			text = StringUtils.normalizeSpace(text);
 			/*
 			 * cherokee phoenix
 			 */
