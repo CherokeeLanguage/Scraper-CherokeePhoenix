@@ -3,12 +3,15 @@ package com.cherokeelessons.com.scraper.phoenix;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Set;
 import java.util.TimeZone;
+import java.util.TreeSet;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 public class Article implements Comparable<Article> {
 	private String article_en = "";
@@ -77,7 +80,9 @@ public class Article implements Comparable<Article> {
 	private String date = "";
 	private String html = "";
 
-	private boolean isCherokee = false;
+	private boolean cherokee = false;
+	private boolean pdf = false;
+	private Set<String> pdfLinks=new TreeSet<>();
 
 	private String title_chr = "";
 
@@ -132,18 +137,30 @@ public class Article implements Comparable<Article> {
 	}
 
 	public boolean isCherokee() {
-		return isCherokee;
+		return cherokee;
+	}
+	
+	public boolean isPdf() {
+		return pdf;
 	}
 
 	public void setHtml(String html) {
 		this.html = html;
-		isCherokee = html.contains("class=\"translation\"") || html.contains("ᏣᎳᎩ");
+		cherokee = html.contains("class=\"translation\"") || html.contains("ᏣᎳᎩ");
 		Document jhtml = Jsoup.parse(html);
 		setDate(jhtml);
 		setTitles(jhtml);
 		setBody_en(jhtml);
 		setBody_chr(jhtml);
 		setAudio_info(jhtml);
+		Elements pdfLinks = jhtml.select("a[href$=pdf]");
+		for (Element pdfLink: pdfLinks) {
+			String absUrl = pdfLink.absUrl("href");
+			if (absUrl.toLowerCase().contains("cherokeephoenix.org/")) {
+				getPdfLinks().add(absUrl);
+			}
+		}
+		pdf = !getPdfLinks().isEmpty();
 	}
 
 	private void setAudio_info(Document jhtml) {
@@ -260,5 +277,13 @@ public class Article implements Comparable<Article> {
 			return _date.compareTo(o._date);
 		}
 		return articleId - o.articleId;
+	}
+
+	public Set<String> getPdfLinks() {
+		return pdfLinks;
+	}
+
+	public void setPdfLinks(Set<String> pdfLinks) {
+		this.pdfLinks = pdfLinks;
 	}
 }

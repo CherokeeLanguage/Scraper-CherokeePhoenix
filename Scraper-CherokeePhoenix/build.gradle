@@ -44,6 +44,8 @@ dependencies {
 	compile 'commons-io:commons-io:+'
 	
 	compile 'com.github.CherokeeLanguage:SimpleTextUi:-SNAPSHOT'
+	
+	compile 'net.sf.cssbox:pdf2dom:+'
 }
  
 sourceSets {

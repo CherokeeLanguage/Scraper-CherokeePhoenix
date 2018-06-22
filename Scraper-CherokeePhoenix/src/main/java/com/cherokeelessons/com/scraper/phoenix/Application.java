@@ -2,27 +2,42 @@ package com.cherokeelessons.com.scraper.phoenix;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.fit.pdfdom.PDFDomTree;
+import org.fit.pdfdom.PDFToHTML;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 public class Application extends Thread {
+	private static final File PDF_CACHE = new File("/var/tmp/CherokeePhoenix-pdfCache");
 	private static final File HTML_OUTPUT_REPORT = new File("results/ᏣᎳᎩ ᏧᎴᎯᏌᏅᎯ --- ᏣᎳᎩ-ᏲᏁᎦ ᏗᎪᏪᎵ.html");
 	final private long seconds = 1000;
 	final private long minutes = 60 * seconds;
@@ -77,6 +92,7 @@ public class Application extends Thread {
 		System.err.println("PROCESSING HTML START: " + new Date());
 		int size=urlList.size();
 		List<Article> listOfArticles=new ArrayList<>();
+		Set<String> pdfLinks = new TreeSet<>();
 		for (int ix = 0; ix<size; ix++) {
 			String articleUri = urlList.get(ix);
 			String html = HtmlCache.getHtml(articleUri);
@@ -86,6 +102,9 @@ public class Application extends Thread {
 			Article newArticle = new Article();
 			newArticle.setUri(articleUri);
 			newArticle.setHtml(html);
+			if (newArticle.isPdf()) {
+				pdfLinks.addAll(newArticle.getPdfLinks());
+			}
 			if (!newArticle.isCherokee()){
 				continue;
 			}
@@ -97,11 +116,13 @@ public class Application extends Thread {
 		Collections.reverse(listOfArticles);
 		
 		System.out.println("Found "+listOfArticles.size()+" Cherokee language articles.");
+		
+		System.out.println("Found "+pdfLinks.size()+" PDF Links.");
+		downloadNew(pdfLinks);
+		Set<String> chrLinks = getCherokeeLanguagePdfLinks(pdfLinks);
+		
 		System.err.println("PROCESSING HTML STOPPED: " + new Date());
-		
-		
 		StringBuilder corpus1 = new StringBuilder();
-		
 		for (Article article: listOfArticles){
 			corpus1.append("=========================================\n");
 			if (article.getTitle_chr().length()>0) {
@@ -199,6 +220,148 @@ public class Application extends Thread {
 		lines.add("</ol>");
 		lines.add("</body></html>");
 		FileUtils.writeLines(HTML_OUTPUT_REPORT, "UTF-8", lines);
+	}
+
+	private Set<String> getCherokeeLanguagePdfLinks(Set<String> pdfLinks) {
+		Set<String> chrPdfLinks = new TreeSet<>();
+		Iterator<String> iPdfs = pdfLinks.iterator();
+		while (iPdfs.hasNext()) {
+			String pdfLink = iPdfs.next();
+			File localPdf = getLocalPdfFile(pdfLink);
+			if (!localPdf.exists()) {
+				continue;
+			}
+			if (!isCherokeeLanguagePdf(localPdf)) {
+				continue;
+			}
+			chrPdfLinks.add(pdfLink);
+		}
+		return chrPdfLinks;
+	}
+
+	private int debugCounter = 0;
+	private boolean isCherokeeLanguagePdf(File localPdf) {
+		String debugIdx = String.valueOf(debugCounter++);
+		while (debugIdx.length()<4) {
+			debugIdx = "0" + debugIdx;
+		}
+		File debugFileHtml = new File(PDF_CACHE, "debug/"+debugIdx+"-full.html");
+		File debugFileChr = new File(PDF_CACHE, "debug/"+debugIdx+"-chr.html");
+		try (PDDocument pdf = PDDocument.load(localPdf)) {
+			PDFDomTree parser = new PDFDomTree();
+			StringWriter output = new StringWriter();
+			parser.writeText(pdf, output);
+			Document pdfHtml = Jsoup.parse(output.toString());
+			String text = pdfHtml.wholeText();
+			text = text.replaceAll("[^Ꭰ-Ᏼ\\s]", "");
+			if (!text.trim().isEmpty()) {
+				FileUtils.write(debugFileChr, text, StandardCharsets.UTF_8);
+				FileUtils.write(debugFileChr, pdfHtml.wholeText(), StandardCharsets.UTF_8);
+			}
+			/*
+			 * cherokee phoenix
+			 */
+			text = text.replace("ᏣᎳᎩ", "");
+			text = text.replace("ᏧᎴᎯᏌᏅᎯ", "");
+			/*
+			 * sections, other
+			 */
+			//news
+			text = text.replace("ᏗᎦᏃᏣᎸᏍᎩ", "");
+			//opinion
+			text = text.replace("ᏃᎵᏍᎬ", "");
+			//community
+			text = text.replace("ᎾᎥ ᏄᎾᏓᎸ", "");
+			//health
+			text = text.replace("ᎠᏰᎸ ᏄᏍᏛ", "");
+			//sevices
+			text = text.replace("ᎾᎾᏛᏁᎲ", "");
+			//education
+			text = text.replace("ᏧᎾᏕᎶᏆᏍᏗ", "");
+			//money
+			text = text.replace("ᎠᏕᎳ", "");
+			//people
+			text = text.replace("ᏴᏫ", "");
+			//culture
+			text = text.replace("ᎢᏳᎾᏛᏁᎵᏓᏍᏗ", "");
+			
+			/*
+			 * months of year
+			 */
+			text = text.replace("ᎤᏃᎸᏔᏂ", "");
+			text = text.replace("ᎧᎦᎵ", "");
+			text = text.replace("ᎠᏅᏱ", "");
+			text = text.replace("ᎧᏬᏂ", "");
+			text = text.replace("ᎠᏂᏍᎬᏗ", "");
+			text = text.replace("ᏕᎭᎷᏱ", "");
+			text = text.replace("ᎫᏰᏉᏂ", "");
+			text = text.replace("ᎦᎶᏂ", "");
+			text = text.replace("ᏚᎵᎢᏍᏗ", "");
+			text = text.replace("ᏚᏂᏂᏗ", "");
+			text = text.replace("ᏅᏓᏕᏆ", "");
+			text = text.replace("ᎥᏍᎩᏱ", "");
+			return !text.trim().isEmpty();
+		} catch (IOException | ParserConfigurationException e) {
+			return false;
+		}
+	}
+
+	@SuppressWarnings("deprecation")
+	private File getLocalPdfFile(String pdfLink) {
+		pdfLink = StringUtils.substringAfter(pdfLink, "//");
+		pdfLink = StringUtils.substringAfter(pdfLink, "/");
+		while (pdfLink.startsWith("/")) {
+			pdfLink = pdfLink.substring(1);
+		}
+		try {
+			pdfLink = URLDecoder.decode(pdfLink, StandardCharsets.UTF_8.name());
+		} catch (UnsupportedEncodingException e) {
+			pdfLink = URLDecoder.decode(pdfLink);
+		}
+		File localPdf = new File(PDF_CACHE, pdfLink);
+		return localPdf;
+	}
+
+	private void downloadNew(Set<String> pdfLinks) {
+		Set<String> _pdfLinks = new TreeSet<>(pdfLinks);
+		PDF_CACHE.mkdirs();
+		Iterator<String> iPdfs = _pdfLinks.iterator();
+		while (iPdfs.hasNext()) {
+			String pdfLink = iPdfs.next();
+			File localPdf = getLocalPdfFile(pdfLink);
+			if (localPdf.exists()) {
+				System.out.println("HAVE: "+localPdf.getAbsolutePath());
+				iPdfs.remove();
+				continue;
+			}
+		}
+		System.out.println("Have "+_pdfLinks.size()+" new PDFs to download.");
+		iPdfs = _pdfLinks.iterator();
+		while (iPdfs.hasNext()) {
+			String pdfLink = iPdfs.next();
+			URL pdfUrl;
+			URLConnection conn;
+			try {
+				pdfUrl = new URL(pdfLink);
+				conn = pdfUrl.openConnection();
+				conn.setConnectTimeout(10000);
+				conn.setReadTimeout(10000);
+			} catch (Exception e) {
+				System.err.println(e);
+				continue;
+			}
+			try (InputStream is = conn.getInputStream()) {
+				File localPdf = getLocalPdfFile(pdfLink);
+				File tmpFile = new File(FileUtils.getTempDirectory(), "temp.pdf");
+				FileUtils.copyInputStreamToFile(is, tmpFile);
+				FileUtils.moveFile(tmpFile, localPdf);
+				System.out.println("\t"+pdfLink);
+			} catch (IOException e) {
+				FileUtils.deleteQuietly(getLocalPdfFile(pdfLink));
+				System.err.println(e);
+				continue;
+			}
+		}
 	}
 
 	private void performHarvest(List<String> urlList) {
