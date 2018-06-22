@@ -119,7 +119,10 @@ public class Application extends Thread {
 		
 		System.out.println("Found "+pdfLinks.size()+" PDF Links.");
 		downloadNew(pdfLinks);
+		System.out.println("Downloading done.");
+		System.out.println("Looking for PDFs with Cherokee Language Articles");
 		Set<String> chrLinks = getCherokeeLanguagePdfLinks(pdfLinks);
+		System.out.println("Found "+chrLinks.size()+" PDFs with Cherokee Language Articles");
 		
 		System.err.println("PROCESSING HTML STOPPED: " + new Date());
 		StringBuilder corpus1 = new StringBuilder();
@@ -241,23 +244,21 @@ public class Application extends Thread {
 
 	private int debugCounter = 0;
 	private boolean isCherokeeLanguagePdf(File localPdf) {
+		System.out.print(localPdf.getName()+" ");
+		File debug = new File(PDF_CACHE, "debug");
 		String debugIdx = String.valueOf(debugCounter++);
 		while (debugIdx.length()<4) {
 			debugIdx = "0" + debugIdx;
 		}
-		File debugFileHtml = new File(PDF_CACHE, "debug/"+debugIdx+"-full.html");
-		File debugFileChr = new File(PDF_CACHE, "debug/"+debugIdx+"-chr.html");
+		File debugFileHtml = new File(debug, debugIdx+"-full.html");
+		File debugFileChr = new File(debug, debugIdx+"-chr.txt");
 		try (PDDocument pdf = PDDocument.load(localPdf)) {
 			PDFDomTree parser = new PDFDomTree();
 			StringWriter output = new StringWriter();
 			parser.writeText(pdf, output);
 			Document pdfHtml = Jsoup.parse(output.toString());
-			String text = pdfHtml.wholeText();
+			String text = pdfHtml.text();
 			text = text.replaceAll("[^Ꭰ-Ᏼ\\s]", "");
-			if (!text.trim().isEmpty()) {
-				FileUtils.write(debugFileChr, text, StandardCharsets.UTF_8);
-				FileUtils.write(debugFileChr, pdfHtml.wholeText(), StandardCharsets.UTF_8);
-			}
 			/*
 			 * cherokee phoenix
 			 */
@@ -300,8 +301,16 @@ public class Application extends Thread {
 			text = text.replace("ᏚᏂᏂᏗ", "");
 			text = text.replace("ᏅᏓᏕᏆ", "");
 			text = text.replace("ᎥᏍᎩᏱ", "");
+			
+			if (!text.trim().isEmpty()) {
+				FileUtils.copyFile(localPdf, new File(debug, localPdf.getName()));
+				FileUtils.write(debugFileHtml, output.toString(), StandardCharsets.UTF_8);
+				FileUtils.write(debugFileChr, text, StandardCharsets.UTF_8);
+			}
+			System.out.println(!text.trim().isEmpty());
 			return !text.trim().isEmpty();
 		} catch (IOException | ParserConfigurationException e) {
+			System.out.println(false);
 			return false;
 		}
 	}
@@ -321,7 +330,12 @@ public class Application extends Thread {
 		File localPdf = new File(PDF_CACHE, pdfLink);
 		return localPdf;
 	}
-
+	private void sleep(int ms) {
+		try {
+			Thread.sleep(ms);
+		} catch (InterruptedException e) {
+		}
+	}	
 	private void downloadNew(Set<String> pdfLinks) {
 		Set<String> _pdfLinks = new TreeSet<>(pdfLinks);
 		PDF_CACHE.mkdirs();
@@ -330,7 +344,6 @@ public class Application extends Thread {
 			String pdfLink = iPdfs.next();
 			File localPdf = getLocalPdfFile(pdfLink);
 			if (localPdf.exists()) {
-				System.out.println("HAVE: "+localPdf.getAbsolutePath());
 				iPdfs.remove();
 				continue;
 			}
@@ -344,10 +357,11 @@ public class Application extends Thread {
 			try {
 				pdfUrl = new URL(pdfLink);
 				conn = pdfUrl.openConnection();
-				conn.setConnectTimeout(10000);
-				conn.setReadTimeout(10000);
+				conn.setConnectTimeout(1000);
+				conn.setReadTimeout(5000);
 			} catch (Exception e) {
 				System.err.println(e);
+				sleep(1000);
 				continue;
 			}
 			try (InputStream is = conn.getInputStream()) {
@@ -359,6 +373,7 @@ public class Application extends Thread {
 			} catch (IOException e) {
 				FileUtils.deleteQuietly(getLocalPdfFile(pdfLink));
 				System.err.println(e);
+				sleep(1000);
 				continue;
 			}
 		}
