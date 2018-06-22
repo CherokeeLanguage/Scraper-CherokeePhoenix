@@ -317,10 +317,10 @@ public class Application extends Thread {
 				FileUtils.write(debugFileHtml, output.toString(), StandardCharsets.UTF_8);
 				FileUtils.write(debugFileChr, text, StandardCharsets.UTF_8);
 			}
-			System.out.println(localPdf.getName()+" "+!text.trim().isEmpty());
+			System.out.println("\t"+localPdf.getName()+" "+!text.trim().isEmpty());
 			return !text.trim().isEmpty();
 		} catch (IOException | ParserConfigurationException e) {
-			System.out.println(localPdf.getName()+" "+false);
+			System.out.println("\t"+localPdf.getName()+" "+false);
 			return false;
 		}
 	}
