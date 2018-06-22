@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ForkJoinPool;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -224,7 +225,8 @@ public class Application extends Thread {
 	}
 
 	private Set<String> getCherokeeLanguagePdfLinks(Set<String> pdfLinks) {
-		Set<String> chrPdfLinks = new TreeSet<>();
+		ForkJoinPool pool = new ForkJoinPool();
+		Set<String> chrPdfLinks = Collections.synchronizedSet(new TreeSet<>());
 		Iterator<String> iPdfs = pdfLinks.iterator();
 		while (iPdfs.hasNext()) {
 			String pdfLink = iPdfs.next();
@@ -232,10 +234,16 @@ public class Application extends Thread {
 			if (!localPdf.exists()) {
 				continue;
 			}
-			if (!isCherokeeLanguagePdf(localPdf)) {
-				continue;
-			}
-			chrPdfLinks.add(pdfLink);
+			pool.submit(()->{
+				if (!isCherokeeLanguagePdf(localPdf)) {
+					return;
+				}
+				chrPdfLinks.add(pdfLink);
+			});
+		}
+		pool.shutdown();
+		while (!pool.isTerminated()) {
+			sleep(500);
 		}
 		return chrPdfLinks;
 	}
@@ -364,7 +372,7 @@ public class Application extends Thread {
 				conn.setReadTimeout(5000);
 			} catch (Exception e) {
 				System.err.println(e);
-				sleep(1000);
+				sleep(250);
 				continue;
 			}
 			try (InputStream is = conn.getInputStream()) {
