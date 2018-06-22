@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
-import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -26,11 +25,10 @@ import java.util.TreeSet;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.fit.pdfdom.PDFDomTree;
-import org.fit.pdfdom.PDFToHTML;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -256,8 +254,12 @@ public class Application extends Thread {
 			PDFDomTree parser = new PDFDomTree();
 			StringWriter output = new StringWriter();
 			parser.writeText(pdf, output);
-			Document pdfHtml = Jsoup.parse(output.toString());
-			String text = pdfHtml.text();
+//			Document pdfHtml = Jsoup.parse(output.toString());
+//			String text = pdfHtml.text();
+			String text = output.toString();
+			//strip tags
+			text = text.replaceAll("<[^<>]*>", "");
+			text = StringEscapeUtils.unescapeHtml4(text);
 			text = text.replaceAll("[^Ꭰ-Ᏼ\\s]", "");
 			/*
 			 * cherokee phoenix

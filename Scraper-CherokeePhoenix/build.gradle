@@ -39,6 +39,7 @@ configurations {
 dependencies {
 	compile 'commons-cli:commons-cli:+'
 	compile 'org.apache.commons:commons-lang3:+'
+	compile 'org.apache.commons:commons-text:+'
 	compile 'com.h2database:h2:1.4.+'
 	compile 'org.jsoup:jsoup:1.11.+'
 	compile 'commons-io:commons-io:+'
