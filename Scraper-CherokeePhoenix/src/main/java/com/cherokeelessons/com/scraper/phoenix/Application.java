@@ -250,7 +250,6 @@ public class Application extends Thread {
 
 	private int debugCounter = 0;
 	private boolean isCherokeeLanguagePdf(File localPdf) {
-		System.out.print(localPdf.getName()+" ");
 		File debug = new File(PDF_CACHE, "debug");
 		String debugIdx = String.valueOf(debugCounter++);
 		while (debugIdx.length()<4) {
@@ -318,10 +317,10 @@ public class Application extends Thread {
 				FileUtils.write(debugFileHtml, output.toString(), StandardCharsets.UTF_8);
 				FileUtils.write(debugFileChr, text, StandardCharsets.UTF_8);
 			}
-			System.out.println(!text.trim().isEmpty());
+			System.out.print(localPdf.getName()+" "+!text.trim().isEmpty());
 			return !text.trim().isEmpty();
 		} catch (IOException | ParserConfigurationException e) {
-			System.out.println(false);
+			System.out.print(localPdf.getName()+" "+false);
 			return false;
 		}
 	}
@@ -384,7 +383,7 @@ public class Application extends Thread {
 			} catch (IOException e) {
 				FileUtils.deleteQuietly(getLocalPdfFile(pdfLink));
 				System.err.println(e);
-				sleep(1000);
+				sleep(250);
 				continue;
 			}
 		}
