@@ -46,6 +46,8 @@ dependencies {
 	compile 'com.github.CherokeeLanguage:SimpleTextUi:-SNAPSHOT'
 	
 	compile 'net.sf.cssbox:pdf2dom:+'
+	compile 'com.levigo.jbig2:levigo-jbig2-imageio:2.0'
+  
 	//required slf4j stuff
 	compile 'org.slf4j:slf4j-jdk14:1.8.+'
 	//database
