@@ -1,0 +1,15 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	logallrefupdates = true
+	packedGitLimit = 1M
+[pack]
+	packsizelimit = 4M
+	windowMemory = 4M
+[remote "origin"]
+	url = git@github.com:CherokeeLanguage/Scraper-CherokeePhoenix.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+	mirror = true
+[branch "master"]
+	remote = origin
+	merge = refs/heads/master

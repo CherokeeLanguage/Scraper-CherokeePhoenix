@@ -14,6 +14,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
@@ -27,6 +28,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.WordUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.fit.pdfdom.PDFDomTree;
 import org.jsoup.Jsoup;
@@ -38,7 +40,8 @@ import com.cherokeelessons.com.scraper.phoenix.db.CacheDao;
 
 public class Application extends Thread {
 	private static final File PDF_CACHE = new File("/var/tmp/CherokeePhoenix-pdfCache");
-	private static final File HTML_OUTPUT_REPORT = new File("results/ᏣᎳᎩ ᏧᎴᎯᏌᏅᎯ --- ᏣᎳᎩ-ᏲᏁᎦ ᏗᎪᏪᎵ.html");
+	private static final File HTML_OUTPUT_REPORT = new File("results/ᏣᎳᎩ ᏧᎴᎯᏌᏅᎯ --- ᏣᎳᎩ-ᏲᏁᎦ ᏗᎪᏪᎵ - ARTICLES.html");
+	private static final File PDF_OUTPUT_REPORT = new File("results/ᏣᎳᎩ ᏧᎴᎯᏌᏅᎯ --- ᏣᎳᎩ-ᏲᏁᎦ ᏗᎪᏪᎵ - PDFS.html");
 	final private long seconds = 1000;
 	final private long minutes = 60 * seconds;
 	final private long hours = 60 * minutes;
@@ -87,11 +90,9 @@ public class Application extends Thread {
 		CacheDao dao = CacheDao.Instance.getCacheDao();
 
 		System.err.println("PROCESSING HTML START: " + new Date());
-		int size=urlList.size();
-		List<Article> listOfArticles=new ArrayList<>();
+		List<Article> listOfAllArticles=new ArrayList<>();
 		Set<String> pdfLinks = new TreeSet<>();
-		for (int ix = 0; ix<size; ix++) {
-			String articleUri = urlList.get(ix);
+		for (String articleUri: urlList) {
 			String html = dao.getHtml(articleUri);
 			if (html == null) {
 				continue;
@@ -99,52 +100,38 @@ public class Application extends Thread {
 			Article newArticle = new Article();
 			newArticle.setUri(articleUri);
 			newArticle.setHtml(html);
+			listOfAllArticles.add(newArticle);
 			if (newArticle.isPdf()) {
 				pdfLinks.addAll(newArticle.getPdfLinks());
 			}
-			if (!newArticle.isCherokee()){
-				continue;
-			}
-			listOfArticles.add(newArticle);
 		}
+		List<Article> listOfCherokeeArticles=new ArrayList<>(listOfAllArticles);
+		listOfCherokeeArticles.removeIf(a->!a.isCherokee());
 		
-		Collections.sort(listOfArticles);
-		Collections.reverse(listOfArticles);
+		Collections.sort(listOfCherokeeArticles);
+		Collections.reverse(listOfCherokeeArticles);
 		
-		System.out.println("Found "+listOfArticles.size()+" Cherokee language articles.");
-		
-		System.out.println("Found "+pdfLinks.size()+" PDF Links.");
+		dao.insertPdfUrl(pdfLinks);
 		downloadNew(pdfLinks);
+		
 		System.out.println("Downloading done.");
 		System.out.println("Looking for PDFs with Cherokee Language Articles");
-		Set<String> chrLinks = getCherokeeLanguagePdfLinks(pdfLinks);
+		updateCherokeeLanguagePdfLinks(dao.getUnknownPdfUrls());
+		
+		System.out.println();
+		
+		saveCorpusAllDocuments(listOfCherokeeArticles);
+		saveCorpusMoses(listOfCherokeeArticles);
+		
+		List<String> chrLinks = dao.getCherokeePdfUrls();
+		System.out.println("Found "+listOfCherokeeArticles.size()+" Cherokee language articles.");
+		saveArticleLinksDocument(listOfCherokeeArticles);
+		
 		System.out.println("Found "+chrLinks.size()+" PDFs with Cherokee Language Articles");
-		
-		System.err.println("PROCESSING HTML STOPPED: " + new Date());
-		StringBuilder corpus1 = new StringBuilder();
-		for (Article article: listOfArticles){
-			corpus1.append("=========================================\n");
-			if (article.getTitle_chr().length()>0) {
-				corpus1.append(article.getTitle_chr());
-				corpus1.append("\n");
-			}
-			if (article.getTitle_en().length()>0){
-				corpus1.append(article.getTitle_en());
-				corpus1.append("\n");
-			}
-			corpus1.append("=========================================");
-			corpus1.append("\n");
-			corpus1.append(article.getUri());
-			corpus1.append("\n");
-			if (article.getDate().length()>0) {
-				corpus1.append("Date: "+article.getDate());
-				corpus1.append("\n");
-			}
-			corpus1.append(article.getArticle_dual());
-			corpus1.append("\n");
-		}
-		FileUtils.write(new File("results/allArticles.txt"), corpus1.toString(), Charset.forName("UTF-8"));
-		
+		savePdfLinksDocument(listOfAllArticles, chrLinks);
+	}
+
+	private void saveCorpusMoses(List<Article> listOfArticles) throws IOException {
 		StringBuilder moses_en=new StringBuilder();
 		StringBuilder moses_chr=new StringBuilder();
 		
@@ -170,27 +157,48 @@ public class Application extends Thread {
 		}
 		FileUtils.write(new File("results/phoenix.en"), moses_en.toString(), Charset.forName("UTF-8"));
 		FileUtils.write(new File("results/phoenix.chr4"), moses_chr.toString(), Charset.forName("UTF-8"));
-		
+	}
+
+	private void saveCorpusAllDocuments(List<Article> listOfArticles) throws IOException {
+		StringBuilder corpus1 = new StringBuilder();
+		for (Article article: listOfArticles){
+			corpus1.append("=========================================\n");
+			if (article.getTitle_chr().length()>0) {
+				corpus1.append(article.getTitle_chr());
+				corpus1.append("\n");
+			}
+			if (article.getTitle_en().length()>0){
+				corpus1.append(article.getTitle_en());
+				corpus1.append("\n");
+			}
+			corpus1.append("=========================================");
+			corpus1.append("\n");
+			corpus1.append(article.getUri());
+			corpus1.append("\n");
+			if (article.getDate().length()>0) {
+				corpus1.append("Date: "+article.getDate());
+				corpus1.append("\n");
+			}
+			corpus1.append(article.getArticle_dual());
+			corpus1.append("\n");
+		}
+		FileUtils.write(new File("results/allArticles.txt"), corpus1.toString(), Charset.forName("UTF-8"));
+	}
+
+	private void saveArticleLinksDocument(List<Article> listOfArticles) throws IOException {
 		List<String> lines=new ArrayList<String>();
-		System.out.println("Saving URLS as an HTML document w/titles.");
-		lines.add("<html><head>");
-		lines.add("<meta charset=\"UTF-8\" lang=\"chr\" />");
-		lines.add("<title>ᏣᎳᎩ ᏧᎴᎯᏌᏅᎯ | ᏣᎳᎩ-ᏲᏁᎦ ᏗᎪᏪᎵ</title>");
-		lines.add("<style>");
-		lines.add("@import url(http://fonts.googleapis.com/earlyaccess/notosanscherokee.css);");
-		lines.add("body {font-family: 'Noto Sans Cherokee', sans-serif;}");
-		lines.add("</style>");
-		lines.add("</head>");
-		lines.add("<body>");
-		lines.add("<h2>ᏣᎳᎩ ᏧᎴᎯᏌᏅᎯ | ᏣᎳᎩ-ᏲᏁᎦ ᏗᎪᏪᎵ</h2>");
-		lines.add("<h3>Cherokee Phoenix | Cherokee-English Articles</h3>");
+		System.out.println("Saving URLS as an STEEMIT READY HTML document w/titles.");
+		lines.add("<html>");
+		String dateStr = new java.sql.Date(System.currentTimeMillis()).toString();
+		lines.add("<h2>ᏣᎳᎩ ᏧᎴᎯᏌᏅᎯ | ᏣᎳᎩ-ᏲᏁᎦ ᏗᎪᏪᎵ - Articles - "+dateStr+"</h2>");
+		lines.add("<h3>Cherokee Phoenix | Cherokee-English Articles - Articles - "+dateStr+"</h3>");
 		lines.add("<p>A total of "+NumberFormat.getInstance().format(listOfArticles.size())+" dual-language articles were found.");
 		lines.add("</p>");
 		lines.add("<p>");
 		lines.add(NumberFormat.getInstance().format(listOfArticles.stream().mapToInt(a->a.hasAudio()?1:0).sum()));
 		lines.add(" articles have links to audio. <em>Some audio files may be missing.</em>");
 		lines.add("</p>");
-		lines.add("<p>This list was generated by Michael Joyner on "+new Date()+" using a custom scraping program written in Java.</p>");
+		lines.add("<p>This list was generated using a custom scraping program written in Java.</p>");
 		lines.add("<ol>");
 		String d;
 		String articleId;
@@ -217,13 +225,57 @@ public class Application extends Thread {
 			lines.add("</li>");
 		}
 		lines.add("</ol>");
-		lines.add("</body></html>");
+		lines.add("</html>");
 		FileUtils.writeLines(HTML_OUTPUT_REPORT, "UTF-8", lines);
 	}
+	
+	private void savePdfLinksDocument(List<Article> listOfArticles, List<String> chrLinks) throws IOException {
+		List<String> lines=new ArrayList<String>();
+		System.out.println("Saving PDF URLS as an STEEMIT READY HTML document w/titles.");
+		lines.add("<html>");
+		String dateStr = new java.sql.Date(System.currentTimeMillis()).toString();
+		lines.add("<h2>ᏣᎳᎩ ᏧᎴᎯᏌᏅᎯ | ᏣᎳᎩ-ᏲᏁᎦ ᏗᎪᏪᎵ - PDFs - "+dateStr+"</h2>");
+		lines.add("<h3>Cherokee Phoenix | Cherokee-English Articles - PDFs - "+dateStr+"</h3>");
+		lines.add("<p>A total of "+NumberFormat.getInstance().format(listOfArticles.size())+" dual-language articles were found.");
+		lines.add("</p>");
+		lines.add("<p>");
+		lines.add(NumberFormat.getInstance().format(listOfArticles.stream().mapToInt(a->a.hasAudio()?1:0).sum()));
+		lines.add(" articles have links to audio. <em>Some audio files may be missing.</em>");
+		lines.add("</p>");
+		lines.add("<p>This list was generated using a custom scraping program written in Java.</p>");
+		lines.add("<ol>");
+		String d;
+		String articleId;
+		for (Article article: listOfArticles) {
+			String title = article.getTitle_chr();
+			if (StringUtils.isBlank(title)) {
+				title=article.getTitle_en();
+			}
+			if (article.getDate().length()>1)  {
+				d=" ("+article.getDate()+")";
+			} else { 
+				d="";
+			}
+			articleId=" ["+article.getArticleId()+"]";
+			
+			lines.add("<li><a href=\""+article.getUri()+"\">");
+			lines.add(title);
+			lines.add("</a>");
+			if (article.hasAudio()) {
+				lines.add(" [<a href='"+article.getAudioUrl()+"'><strong>AUDIO</strong>"+"</a>]");
+			}
+			
+			lines.add(d+articleId);
+			lines.add("</li>");
+		}
+		lines.add("</ol>");
+		lines.add("</html>");
+		FileUtils.writeLines(PDF_OUTPUT_REPORT, "UTF-8", lines);
+	}
 
-	private Set<String> getCherokeeLanguagePdfLinks(Set<String> pdfLinks) {
+	private void updateCherokeeLanguagePdfLinks(Collection<String> pdfLinks) {
+		CacheDao dao = CacheDao.Instance.getCacheDao();
 		ForkJoinPool pool = new ForkJoinPool();
-		Set<String> chrPdfLinks = Collections.synchronizedSet(new TreeSet<>());
 		Iterator<String> iPdfs = pdfLinks.iterator();
 		while (iPdfs.hasNext()) {
 			String pdfLink = iPdfs.next();
@@ -232,17 +284,14 @@ public class Application extends Thread {
 				continue;
 			}
 			pool.submit(()->{
-				if (!isCherokeeLanguagePdf(localPdf)) {
-					return;
-				}
-				chrPdfLinks.add(pdfLink);
+				dao.updatePdfUrl(pdfLink, isCherokeeLanguagePdf(localPdf));
 			});
 		}
 		pool.shutdown();
 		while (!pool.isTerminated()) {
-			sleep(500);
+			sleep(50);
 		}
-		return chrPdfLinks;
+		return;
 	}
 
 	private int debugCounter = 0;
@@ -314,8 +363,10 @@ public class Application extends Thread {
 				FileUtils.write(debugFileHtml, output.toString(), StandardCharsets.UTF_8);
 				FileUtils.write(debugFileChr, text, StandardCharsets.UTF_8);
 			}
-			System.out.println("\t"+localPdf.getName()+" "+!text.trim().isEmpty());
-			return !text.trim().isEmpty();
+			int spaceCount = StringUtils.countMatches(text, " ");
+			boolean hasEnoughCherokeeWords = spaceCount>5;
+			System.out.println("\t"+localPdf.getName()+" "+hasEnoughCherokeeWords+" ["+(spaceCount+1)+" words]");
+			return hasEnoughCherokeeWords;
 		} catch (IOException | ParserConfigurationException e) {
 			System.out.println("\t"+localPdf.getName()+" "+false);
 			return false;
@@ -368,9 +419,7 @@ public class Application extends Thread {
 				conn.setConnectTimeout(10000);
 				conn.setReadTimeout(30000);
 			} catch (Exception e) {
-				System.err.println("   > " +pdfLink);
-				System.err.println(e);
-				sleep(250);
+				sleep(100);
 				continue;
 			}
 			try (InputStream is = conn.getInputStream()) {
@@ -381,9 +430,7 @@ public class Application extends Thread {
 				System.out.println("\t"+pdfLink);
 			} catch (IOException e) {
 				FileUtils.deleteQuietly(getLocalPdfFile(pdfLink));
-				System.err.println("   > " +pdfLink);
-				System.err.println(e);
-				sleep(250);
+				sleep(100);
 				continue;
 			}
 		}
