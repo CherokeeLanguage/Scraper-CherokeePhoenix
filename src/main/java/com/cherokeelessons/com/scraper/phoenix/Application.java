@@ -1,4 +1,5 @@
 package com.cherokeelessons.com.scraper.phoenix;
+
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
@@ -70,13 +71,13 @@ public class Application extends Thread {
 		dao.resetMaybeBadScrapes();
 		urlList.addAll(dao.forRescraping());
 		performHarvest(urlList);
-		
-		urlList=dao.getUrls();
-		
+
+		urlList = dao.getUrls();
+
 		System.err.println("========================================================");
-		System.out.println("Processing "+urlList.size()+" cached articles.");
+		System.out.println("Processing " + urlList.size() + " cached articles.");
 		System.err.println("========================================================");
-		
+
 		extractDataFromHtml(urlList);
 		System.err.println("Processing complete at " + new Date());
 		Desktop.getDesktop().open(HTML_OUTPUT_REPORT.getParentFile());
@@ -87,13 +88,13 @@ public class Application extends Thread {
 	}
 
 	private void extractDataFromHtml(List<String> urlList) throws IOException {
-		
+
 		CacheDao dao = CacheDao.Instance.getCacheDao();
 
 		System.err.println("PROCESSING HTML START: " + new Date());
-		List<Article> listOfAllArticles=new ArrayList<>();
+		List<Article> listOfAllArticles = new ArrayList<>();
 		Set<String> pdfLinks = new TreeSet<>();
-		for (String articleUri: urlList) {
+		for (String articleUri : urlList) {
 			String html = dao.getHtml(articleUri);
 			if (html == null) {
 				continue;
@@ -106,46 +107,46 @@ public class Application extends Thread {
 				pdfLinks.addAll(newArticle.getPdfLinks());
 			}
 		}
-		List<Article> listOfCherokeeArticles=new ArrayList<>(listOfAllArticles);
-		listOfCherokeeArticles.removeIf(a->!a.isCherokee());
-		
+		List<Article> listOfCherokeeArticles = new ArrayList<>(listOfAllArticles);
+		listOfCherokeeArticles.removeIf(a -> !a.isCherokee());
+
 		Collections.sort(listOfCherokeeArticles);
 		Collections.reverse(listOfCherokeeArticles);
-		
+
 		dao.insertPdfUrl(pdfLinks);
 		downloadNew(pdfLinks);
-		
+
 		System.out.println("Downloading done.");
 		System.out.println("Looking for PDFs with Cherokee Language Articles");
 		updateCherokeeLanguagePdfLinks(dao.getUnknownPdfUrls());
-		
+
 		System.out.println();
-		
+
 		saveCorpusAllDocuments(listOfCherokeeArticles);
 		saveCorpusMoses(listOfCherokeeArticles);
-		
+
 		List<String> chrLinks = dao.getCherokeePdfUrls();
-		System.out.println("Found "+listOfCherokeeArticles.size()+" Cherokee language articles.");
+		System.out.println("Found " + listOfCherokeeArticles.size() + " Cherokee language articles.");
 		saveArticleLinksDocument(listOfCherokeeArticles);
-		
-		System.out.println("Found "+chrLinks.size()+" PDFs with Cherokee Language Articles");
+
+		System.out.println("Found " + chrLinks.size() + " PDFs with Cherokee Language Articles");
 		savePdfLinksDocument(listOfAllArticles, chrLinks);
 	}
 
 	private void saveCorpusMoses(List<Article> listOfArticles) throws IOException {
-		StringBuilder moses_en=new StringBuilder();
-		StringBuilder moses_chr=new StringBuilder();
-		
-		for (Article article: listOfArticles){
+		StringBuilder moses_en = new StringBuilder();
+		StringBuilder moses_chr = new StringBuilder();
+
+		for (Article article : listOfArticles) {
 			moses_en.append("--- ---\n");
 			moses_chr.append("--- ---\n");
-			if (article.getTitle_chr().length()>0 && article.getTitle_en().length()>0) {
+			if (article.getTitle_chr().length() > 0 && article.getTitle_en().length() > 0) {
 				moses_en.append(article.getTitle_en().replaceAll("\n+", " --- "));
 				moses_chr.append(article.getTitle_chr().replaceAll("\n+", " --- "));
 				moses_en.append("\n");
 				moses_chr.append("\n");
 			}
-			if (article.getDate().length()>0) {
+			if (article.getDate().length() > 0) {
 				moses_en.append(article.getDate().replaceAll("\n+", " --- "));
 				moses_chr.append(article.getDate().replaceAll("\n+", " --- "));
 				moses_en.append("\n");
@@ -162,13 +163,13 @@ public class Application extends Thread {
 
 	private void saveCorpusAllDocuments(List<Article> listOfArticles) throws IOException {
 		StringBuilder corpus1 = new StringBuilder();
-		for (Article article: listOfArticles){
+		for (Article article : listOfArticles) {
 			corpus1.append("=========================================\n");
-			if (article.getTitle_chr().length()>0) {
+			if (article.getTitle_chr().length() > 0) {
 				corpus1.append(article.getTitle_chr());
 				corpus1.append("\n");
 			}
-			if (article.getTitle_en().length()>0){
+			if (article.getTitle_en().length() > 0) {
 				corpus1.append(article.getTitle_en());
 				corpus1.append("\n");
 			}
@@ -176,8 +177,8 @@ public class Application extends Thread {
 			corpus1.append("\n");
 			corpus1.append(article.getUri());
 			corpus1.append("\n");
-			if (article.getDate().length()>0) {
-				corpus1.append("Date: "+article.getDate());
+			if (article.getDate().length() > 0) {
+				corpus1.append("Date: " + article.getDate());
 				corpus1.append("\n");
 			}
 			corpus1.append(article.getArticle_dual());
@@ -187,99 +188,109 @@ public class Application extends Thread {
 	}
 
 	private void saveArticleLinksDocument(List<Article> listOfArticles) throws IOException {
-		List<String> lines=new ArrayList<String>();
+		List<String> lines = new ArrayList<String>();
 		System.out.println("Saving URLS as an STEEMIT READY HTML document w/titles.");
 		lines.add("<html>");
 		String dateStr = new java.sql.Date(System.currentTimeMillis()).toString();
-		lines.add("<h2>ᏣᎳᎩ ᏧᎴᎯᏌᏅᎯ | ᏣᎳᎩ-ᏲᏁᎦ ᏗᎪᏪᎵ - Articles - "+dateStr+"</h2>");
-		lines.add("<h3>Cherokee Phoenix | Cherokee-English Articles - Articles - "+dateStr+"</h3>");
-		lines.add("<p>A total of "+NumberFormat.getInstance().format(listOfArticles.size())+" dual-language articles were found.");
+		lines.add("<h2>ᏣᎳᎩ ᏧᎴᎯᏌᏅᎯ | ᏣᎳᎩ-ᏲᏁᎦ ᏗᎪᏪᎵ - Articles - " + dateStr + "</h2>");
+		lines.add("<h3>Cherokee Phoenix | Cherokee-English Articles - Articles - " + dateStr + "</h3>");
+		lines.add("<p>A total of " + NumberFormat.getInstance().format(listOfArticles.size())
+				+ " dual-language articles were found.");
 		lines.add("</p>");
 		lines.add("<p>");
-		lines.add(NumberFormat.getInstance().format(listOfArticles.stream().mapToInt(a->a.hasAudio()?1:0).sum()));
+		lines.add(NumberFormat.getInstance().format(listOfArticles.stream().mapToInt(a -> a.hasAudio() ? 1 : 0).sum()));
 		lines.add(" articles have links to audio. <em>Some audio files may be missing.</em>");
 		lines.add("</p>");
 		lines.add("<p>This list was generated using a custom scraping program written in Java.</p>");
+		lines.add("<p>GIT HUB LINK: [" //
+				+ "<a href='https://github.com/CherokeeLanguage/Scraper-CherokeePhoenix'>" //
+				+ "CherokeeLanguage/Scraper-CherokeePhoenix" //
+				+ "</a>]</p>");
 		lines.add("<ol>");
 		String d;
 		String articleId;
-		for (Article article: listOfArticles) {
+		for (Article article : listOfArticles) {
 			String title = article.getTitle_chr();
 			if (StringUtils.isBlank(title)) {
-				title=article.getTitle_en();
+				title = article.getTitle_en();
 			}
-			if (article.getDate().length()>1)  {
-				d=" ("+article.getDate()+")";
-			} else { 
-				d="";
+			if (article.getDate().length() > 1) {
+				d = " (" + article.getDate() + ")";
+			} else {
+				d = "";
 			}
-			articleId=" ["+article.getArticleId()+"]";
-			
-			lines.add("<li><a href=\""+article.getUri()+"\">");
+			articleId = " [" + article.getArticleId() + "]";
+
+			lines.add("<li><a href=\"" + article.getUri() + "\">");
 			lines.add(title);
 			lines.add("</a>");
 			if (article.hasAudio()) {
-				lines.add(" [<a href='"+article.getAudioUrl()+"'><strong>AUDIO</strong>"+"</a>]");
+				lines.add(" [<a href='" + article.getAudioUrl() + "'><strong>AUDIO</strong>" + "</a>]");
 			}
-			
-			lines.add(d+articleId);
+
+			lines.add(d + articleId);
 			lines.add("</li>");
 		}
 		lines.add("</ol>");
 		lines.add("</html>");
 		FileUtils.writeLines(HTML_OUTPUT_REPORT, "UTF-8", lines);
 	}
-	
+
 	private void savePdfLinksDocument(List<Article> listOfAllArticles, List<String> chrLinks) throws IOException {
 		List<Article> listOfChrPdfArticles = new ArrayList<>(listOfAllArticles);
-		listOfChrPdfArticles.removeIf((a)->{
+		listOfChrPdfArticles.removeIf((a) -> {
 			Set<String> pdfLinks = new TreeSet<>(a.getPdfLinks());
 			pdfLinks.retainAll(chrLinks);
 			return !pdfLinks.isEmpty();
 		});
 		Collections.sort(listOfChrPdfArticles);
 		Collections.reverse(listOfChrPdfArticles);
-		
-		List<String> lines=new ArrayList<String>();
+
+		List<String> lines = new ArrayList<String>();
 		System.out.println("Saving PDF URLS as an STEEMIT READY HTML document w/titles.");
 		lines.add("<html>");
 		String dateStr = new java.sql.Date(System.currentTimeMillis()).toString();
-		lines.add("<h2>ᏣᎳᎩ ᏧᎴᎯᏌᏅᎯ | ᏣᎳᎩ-ᏲᏁᎦ ᏗᎪᏪᎵ - PDFs - "+dateStr+"</h2>");
-		lines.add("<h3>Cherokee Phoenix | Cherokee-English Articles - PDFs - "+dateStr+"</h3>");
-		lines.add("<p>A total of "+NumberFormat.getInstance().format(chrLinks.size())+" dual-language PDFs were found.");
+		lines.add("<h2>ᏣᎳᎩ ᏧᎴᎯᏌᏅᎯ | ᏣᎳᎩ-ᏲᏁᎦ ᏗᎪᏪᎵ - PDFs - " + dateStr + "</h2>");
+		lines.add("<h3>Cherokee Phoenix | Cherokee-English Articles - PDFs - " + dateStr + "</h3>");
+		lines.add("<p>A total of " + NumberFormat.getInstance().format(chrLinks.size())
+				+ " dual-language PDFs were found.");
 		lines.add("</p>");
 		lines.add("<p>This list was generated using a custom scraping program written in Java.</p>");
+		lines.add("<p>GIT HUB LINK: [" //
+				+ "<a href='https://github.com/CherokeeLanguage/Scraper-CherokeePhoenix'>" //
+				+ "CherokeeLanguage/Scraper-CherokeePhoenix" //
+				+ "</a>]</p>");
 		lines.add("<ol>");
 		String d;
 		String articleId;
-		for (Article article: listOfChrPdfArticles) {
+		for (Article article : listOfChrPdfArticles) {
 			String title = article.getTitle_chr();
 			if (StringUtils.isBlank(title)) {
-				title=article.getTitle_en();
+				title = article.getTitle_en();
 			}
-			if (article.getDate().length()>1)  {
-				d=" ("+article.getDate()+")";
-			} else { 
-				d="";
+			if (article.getDate().length() > 1) {
+				d = " (" + article.getDate() + ")";
+			} else {
+				d = "";
 			}
-			articleId=" ["+article.getArticleId()+"]";
-			
-			lines.add("<li><a href=\""+article.getUri()+"\">");
+			articleId = " [" + article.getArticleId() + "]";
+
+			lines.add("<li><a href=\"" + article.getUri() + "\">");
 			lines.add(title);
 			lines.add("</a>");
-			lines.add(d+articleId);
+			lines.add(d + articleId);
 			lines.add("<ul>");
-			
-			for (String pdfLink: article.getPdfLinks()) {
+
+			for (String pdfLink : article.getPdfLinks()) {
 				String name = StringUtils.substringAfterLast(pdfLink, "/");
 				if (pdfLink.contains(" ")) {
 					pdfLink = pdfLink.replace(" ", "%20");
 				}
 				lines.add("<li>PDF: ");
-				lines.add("<a target='_blank' href='"+pdfLink+">"+StringEscapeUtils.escapeHtml4(name)+"</a>");
+				lines.add("<a target='_blank' href='" + pdfLink + ">" + StringEscapeUtils.escapeHtml4(name) + "</a>");
 				lines.add("</li>");
 			}
-			
+
 			lines.add("</ul>");
 			lines.add("</li>");
 		}
@@ -290,12 +301,12 @@ public class Application extends Thread {
 
 	@SuppressWarnings("unused")
 	private Map<String, Set<Article>> getPdfUrlArticleMap(List<Article> listOfArticles) {
-		Map<String, Set<Article>> pdfUrlsToArticles=new HashMap<>();
-		for (Article article: listOfArticles) {
+		Map<String, Set<Article>> pdfUrlsToArticles = new HashMap<>();
+		for (Article article : listOfArticles) {
 			if (!article.isPdf()) {
 				continue;
 			}
-			for (String pdfUrl: article.getPdfLinks()) {
+			for (String pdfUrl : article.getPdfLinks()) {
 				if (!pdfUrlsToArticles.containsKey(pdfUrl)) {
 					pdfUrlsToArticles.put(pdfUrl, new TreeSet<>());
 				}
@@ -315,7 +326,7 @@ public class Application extends Thread {
 			if (!localPdf.exists()) {
 				continue;
 			}
-			pool.submit(()->{
+			pool.submit(() -> {
 				dao.updatePdfUrl(pdfLink, isCherokeeLanguagePdf(localPdf));
 			});
 		}
@@ -327,24 +338,25 @@ public class Application extends Thread {
 	}
 
 	private int debugCounter = 0;
+
 	private boolean isCherokeeLanguagePdf(File localPdf) {
 		File debug = new File(PDF_CACHE, "debug");
 		String debugIdx = String.valueOf(debugCounter++);
-		while (debugIdx.length()<4) {
+		while (debugIdx.length() < 4) {
 			debugIdx = "0" + debugIdx;
 		}
-		File debugFileHtml = new File(debug, debugIdx+"-full.html");
-		File debugFileChr = new File(debug, debugIdx+"-chr.txt");
+		File debugFileHtml = new File(debug, debugIdx + "-full.html");
+		File debugFileChr = new File(debug, debugIdx + "-chr.txt");
 		try (PDDocument pdf = PDDocument.load(localPdf)) {
 			PDFDomTree parser = new PDFDomTree();
 			StringWriter output = new StringWriter();
 			parser.writeText(pdf, output);
-//			Document pdfHtml = Jsoup.parse(output.toString());
-//			String text = pdfHtml.text();
+			// Document pdfHtml = Jsoup.parse(output.toString());
+			// String text = pdfHtml.text();
 			String text = output.toString();
-			//strip tags
+			// strip tags
 			text = text.replaceAll("<[^<>]*>", "");
-			//text = StringEscapeUtils.unescapeHtml4(text);
+			// text = StringEscapeUtils.unescapeHtml4(text);
 			text = text.replaceAll("[^Ꭰ-Ᏼ\\s]", "");
 			text = StringUtils.normalizeSpace(text);
 			/*
@@ -355,25 +367,25 @@ public class Application extends Thread {
 			/*
 			 * sections, other
 			 */
-			//news
+			// news
 			text = text.replace("ᏗᎦᏃᏣᎸᏍᎩ", "");
-			//opinion
+			// opinion
 			text = text.replace("ᏃᎵᏍᎬ", "");
-			//community
+			// community
 			text = text.replace("ᎾᎥ ᏄᎾᏓᎸ", "");
-			//health
+			// health
 			text = text.replace("ᎠᏰᎸ ᏄᏍᏛ", "");
-			//sevices
+			// sevices
 			text = text.replace("ᎾᎾᏛᏁᎲ", "");
-			//education
+			// education
 			text = text.replace("ᏧᎾᏕᎶᏆᏍᏗ", "");
-			//money
+			// money
 			text = text.replace("ᎠᏕᎳ", "");
-			//people
+			// people
 			text = text.replace("ᏴᏫ", "");
-			//culture
+			// culture
 			text = text.replace("ᎢᏳᎾᏛᏁᎵᏓᏍᏗ", "");
-			
+
 			/*
 			 * months of year
 			 */
@@ -389,19 +401,19 @@ public class Application extends Thread {
 			text = text.replace("ᏚᏂᏂᏗ", "");
 			text = text.replace("ᏅᏓᏕᏆ", "");
 			text = text.replace("ᎥᏍᎩᏱ", "");
-			
+
 			if (!text.trim().isEmpty()) {
 				FileUtils.copyFile(localPdf, new File(debug, localPdf.getName()));
 				FileUtils.write(debugFileHtml, output.toString(), StandardCharsets.UTF_8);
 				FileUtils.write(debugFileChr, text, StandardCharsets.UTF_8);
 			}
 			int spaceCount = StringUtils.countMatches(text.trim(), " ");
-			int wordCount = spaceCount>0?spaceCount+1:0;
-			boolean hasEnoughCherokeeWords = wordCount>5;
-			System.out.println("\t"+localPdf.getName()+" "+hasEnoughCherokeeWords+" ["+wordCount+" words]");
+			int wordCount = spaceCount > 0 ? spaceCount + 1 : 0;
+			boolean hasEnoughCherokeeWords = wordCount > 5;
+			System.out.println("\t" + localPdf.getName() + " " + hasEnoughCherokeeWords + " [" + wordCount + " words]");
 			return hasEnoughCherokeeWords;
 		} catch (IOException | ParserConfigurationException e) {
-			System.out.println("\t"+localPdf.getName()+" "+false);
+			System.out.println("\t" + localPdf.getName() + " " + false);
 			System.err.println(e.getMessage());
 			return false;
 		}
@@ -422,12 +434,14 @@ public class Application extends Thread {
 		File localPdf = new File(PDF_CACHE, pdfLink);
 		return localPdf;
 	}
+
 	private void sleep(int ms) {
 		try {
 			Thread.sleep(ms);
 		} catch (InterruptedException e) {
 		}
-	}	
+	}
+
 	private void downloadNew(Set<String> pdfLinks) {
 		Set<String> _pdfLinks = new TreeSet<>(pdfLinks);
 		PDF_CACHE.mkdirs();
@@ -440,7 +454,7 @@ public class Application extends Thread {
 				continue;
 			}
 		}
-		System.out.println("Have "+_pdfLinks.size()+" PDFs to download.");
+		System.out.println("Have " + _pdfLinks.size() + " PDFs to download.");
 		iPdfs = _pdfLinks.iterator();
 		while (iPdfs.hasNext()) {
 			String pdfLink = iPdfs.next();
@@ -461,7 +475,7 @@ public class Application extends Thread {
 				File tmpFile = new File(FileUtils.getTempDirectory(), "temp.pdf");
 				FileUtils.copyInputStreamToFile(is, tmpFile);
 				FileUtils.moveFile(tmpFile, localPdf);
-				System.out.println("\t"+pdfLink);
+				System.out.println("\t" + pdfLink);
 			} catch (IOException e) {
 				FileUtils.deleteQuietly(getLocalPdfFile(pdfLink));
 				sleep(100);
@@ -474,7 +488,6 @@ public class Application extends Thread {
 		CacheDao dao = CacheDao.Instance.getCacheDao();
 		Document details;
 		long startTime = System.currentTimeMillis();
-		
 
 		int lastPercent = -1;
 		int newPercent = 0;
@@ -483,7 +496,7 @@ public class Application extends Thread {
 
 		System.out.println("STARTING FETCH OF " + urlList.size() + " URLS.");
 		System.err.println("HARVEST START: " + new Date());
-//		boolean newData=false;
+		// boolean newData=false;
 		for (int ix = 0; ix < urlList.size(); ix++) {
 			if (System.currentTimeMillis() - startTime > timeLimit) {
 				// out of time for harvesting, go on to next steps
@@ -493,113 +506,110 @@ public class Application extends Thread {
 			details = null;
 			filingUri = urlList.get(ix);
 			html = dao.getHtml(filingUri);
-//			newData=false;
+			// newData=false;
 			if (html == null) {
 				for (int retries = 0; retries < 3; retries++) {
 					try {
 						details = Jsoup.connect(filingUri).get();
 						dao.putHtml(filingUri, details.outerHtml());
-//						newData=true;
+						// newData=true;
 						html = details.outerHtml();
 						break;
 					} catch (IOException e) {
-						if (e.getMessage().startsWith("404 error")){
-							html="";
-//							newData=false;
+						if (e.getMessage().startsWith("404 error")) {
+							html = "";
+							// newData=false;
 							break;
 						} else {
 							System.err.println(e.getMessage());
-							System.err.println("RETRY: "+filingUri);
+							System.err.println("RETRY: " + filingUri);
 							randomSleep();
 						}
 					}
 				}
 			}
-			if (html==null || html.length()<1) {
-//				System.err.println("FAILED: "+filingUri);
+			if (html == null || html.length() < 1) {
+				// System.err.println("FAILED: "+filingUri);
 				continue;
 			}
 			newPercent = (100 * ix / urlList.size());
 			if (newPercent != lastPercent) {
 				System.out.println("HARVEST " + newPercent + "% complete.");
 				lastPercent = newPercent;
-//				if (newData) randomSleep();
+				// if (newData) randomSleep();
 			}
 		}
 
 		// flush db to disk then reload
 		System.err.println("HARVEST STOP: " + new Date());
 	}
-	
+
 	/**
 	 * {@link http://stackoverflow.com/questions/4596447/check-if-file-exists-on-remote-server-using-its-url}
+	 * 
 	 * @param URLName
 	 * @return
 	 */
-	public static boolean httpExists(String URLName){
-	    try {
-	      HttpURLConnection.setFollowRedirects(false);
-	      // note : you may also need
-	      //        HttpURLConnection.setInstanceFollowRedirects(false)
-	      HttpURLConnection con =
-	         (HttpURLConnection) new URL(URLName).openConnection();
-	      con.setRequestMethod("HEAD");
-	      boolean b = con.getResponseCode() == HttpURLConnection.HTTP_OK;
-//	      System.out.println("URLName: "+URLName+" ["+b+"]");
-		return b;
-	    }
-	    catch (Exception e) {
-	       e.printStackTrace();
-	       return false;
-	    }
-	  }
-	
+	public static boolean httpExists(String URLName) {
+		try {
+			HttpURLConnection.setFollowRedirects(false);
+			// note : you may also need
+			// HttpURLConnection.setInstanceFollowRedirects(false)
+			HttpURLConnection con = (HttpURLConnection) new URL(URLName).openConnection();
+			con.setRequestMethod("HEAD");
+			boolean b = con.getResponseCode() == HttpURLConnection.HTTP_OK;
+			// System.out.println("URLName: "+URLName+" ["+b+"]");
+			return b;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
 	private Set<String> loadSeedUrls() throws MalformedURLException, IOException {
 		System.err.println("Loading initial URLS: " + new Date());
 		Set<String> urlList = new TreeSet<>();
-		int articleId=1;
+		int articleId = 1;
 		String queryURI;
 
 		CacheDao dao = CacheDao.Instance.getCacheDao();
-		articleId=dao.getMaxArticleId();
-		int maxId=0;
+		articleId = dao.getMaxArticleId();
+		int maxId = 0;
 		Document indexPage = Jsoup.parse(new URL("http://www.cherokeephoenix.org/"), 30000);
 		Elements alist = indexPage.select("a");
-		if (alist!=null) {
-			for (Element a: alist) {
-				if (!a.hasAttr("href")){
+		if (alist != null) {
+			for (Element a : alist) {
+				if (!a.hasAttr("href")) {
 					continue;
 				}
-				String href=a.attr("href");
-				if (!href.contains("Article/index/")){
+				String href = a.attr("href");
+				if (!href.contains("Article/index/")) {
 					continue;
 				}
 				String number = StringUtils.substringAfterLast(href, "Article/index/");
-				maxId=Math.max(Integer.valueOf(number), maxId);
+				maxId = Math.max(Integer.valueOf(number), maxId);
 			}
 		}
-		System.out.println(" - home page shows max id of: "+maxId);
-		
-		if (maxId==articleId) {
+		System.out.println(" - home page shows max id of: " + maxId);
+
+		if (maxId == articleId) {
 			System.out.println("\tUrl list seems up-to-date.");
 			return urlList;
 		}
-		
+
 		System.out.println(" - scanning for new valid article ids");
 		do {
 			articleId++;
-			queryURI = BASE_URL+ARTICLE_PATH+String.valueOf(articleId);//+queryURIB;
+			queryURI = BASE_URL + ARTICLE_PATH + String.valueOf(articleId);// +queryURIB;
 			if (httpExists(queryURI)) {
-				urlList.add(BASE_URL+ARTICLE_PATH+String.valueOf(articleId));//+queryURIB);
-				System.out.println(" - articleId: "+articleId);
+				urlList.add(BASE_URL + ARTICLE_PATH + String.valueOf(articleId));// +queryURIB);
+				System.out.println(" - articleId: " + articleId);
 			}
-		} while (articleId<maxId);
+		} while (articleId < maxId);
 
-		System.out.println("CALCULATED URI LIST: (urls) "+urlList.size());
+		System.out.println("CALCULATED URI LIST: (urls) " + urlList.size());
 		return urlList;
 	}
-	
-	
 
 	private void randomSleep() {
 		randomSleep(1000, 0);
@@ -622,4 +632,3 @@ public class Application extends Thread {
 		}
 	}
 }
-
