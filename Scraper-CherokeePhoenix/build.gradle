@@ -40,7 +40,6 @@ dependencies {
 	compile 'commons-cli:commons-cli:+'
 	compile 'org.apache.commons:commons-lang3:+'
 	compile 'org.apache.commons:commons-text:+'
-	compile 'com.h2database:h2:1.4.+'
 	compile 'org.jsoup:jsoup:1.11.+'
 	compile 'commons-io:commons-io:+'
 	
@@ -49,6 +48,10 @@ dependencies {
 	compile 'net.sf.cssbox:pdf2dom:+'
 	//required slf4j stuff
 	compile 'org.slf4j:slf4j-jdk14:1.8.+'
+	//database
+	compile 'com.h2database:h2:1.4.+'
+	compile 'org.jdbi:jdbi3-core:+'
+	compile 'org.jdbi:jdbi3-sqlobject:+'
 }
  
 sourceSets {

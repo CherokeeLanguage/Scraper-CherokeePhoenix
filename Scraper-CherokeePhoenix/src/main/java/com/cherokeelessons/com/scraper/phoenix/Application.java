@@ -27,13 +27,14 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.StringEscapeUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.fit.pdfdom.PDFDomTree;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+
+import com.cherokeelessons.com.scraper.phoenix.db.CacheDao;
 
 public class Application extends Thread {
 	private static final File PDF_CACHE = new File("/var/tmp/CherokeePhoenix-pdfCache");
@@ -58,17 +59,14 @@ public class Application extends Thread {
 	}
 
 	private void _run() throws IOException {
+		CacheDao dao = CacheDao.Instance.getCacheDao();
 		List<String> urlList;
 		urlList = new ArrayList<>(loadSeedUrls());
-		HtmlCache.open();
-		HtmlCache.resetMaybeBadScrapes();
-		urlList.addAll(HtmlCache.forRescraping());
-		HtmlCache.close();
+		dao.resetMaybeBadScrapes();
+		urlList.addAll(dao.forRescraping());
 		performHarvest(urlList);
 		
-		HtmlCache.open();
-		urlList=HtmlCache.allUrls();
-		HtmlCache.close();
+		urlList=dao.getUrls();
 		
 		System.err.println("========================================================");
 		System.out.println("Processing "+urlList.size()+" cached articles.");
@@ -86,7 +84,7 @@ public class Application extends Thread {
 
 	private void extractDataFromHtml(List<String> urlList) throws IOException {
 		
-		HtmlCache.open();
+		CacheDao dao = CacheDao.Instance.getCacheDao();
 
 		System.err.println("PROCESSING HTML START: " + new Date());
 		int size=urlList.size();
@@ -94,7 +92,7 @@ public class Application extends Thread {
 		Set<String> pdfLinks = new TreeSet<>();
 		for (int ix = 0; ix<size; ix++) {
 			String articleUri = urlList.get(ix);
-			String html = HtmlCache.getHtml(articleUri);
+			String html = dao.getHtml(articleUri);
 			if (html == null) {
 				continue;
 			}
@@ -109,7 +107,6 @@ public class Application extends Thread {
 			}
 			listOfArticles.add(newArticle);
 		}
-		HtmlCache.close();
 		
 		Collections.sort(listOfArticles);
 		Collections.reverse(listOfArticles);
@@ -358,18 +355,20 @@ public class Application extends Thread {
 				continue;
 			}
 		}
-		System.out.println("Have "+_pdfLinks.size()+" new PDFs to download.");
+		System.out.println("Have "+_pdfLinks.size()+" PDFs to download.");
 		iPdfs = _pdfLinks.iterator();
 		while (iPdfs.hasNext()) {
 			String pdfLink = iPdfs.next();
 			URL pdfUrl;
 			URLConnection conn;
 			try {
+				pdfLink = pdfLink.replace(" ", "%20");
 				pdfUrl = new URL(pdfLink);
 				conn = pdfUrl.openConnection();
-				conn.setConnectTimeout(1000);
-				conn.setReadTimeout(5000);
+				conn.setConnectTimeout(10000);
+				conn.setReadTimeout(30000);
 			} catch (Exception e) {
+				System.err.println("   > " +pdfLink);
 				System.err.println(e);
 				sleep(250);
 				continue;
@@ -382,6 +381,7 @@ public class Application extends Thread {
 				System.out.println("\t"+pdfLink);
 			} catch (IOException e) {
 				FileUtils.deleteQuietly(getLocalPdfFile(pdfLink));
+				System.err.println("   > " +pdfLink);
 				System.err.println(e);
 				sleep(250);
 				continue;
@@ -390,7 +390,7 @@ public class Application extends Thread {
 	}
 
 	private void performHarvest(List<String> urlList) {
-		HtmlCache.open();
+		CacheDao dao = CacheDao.Instance.getCacheDao();
 		Document details;
 		long startTime = System.currentTimeMillis();
 		
@@ -411,13 +411,13 @@ public class Application extends Thread {
 			}
 			details = null;
 			filingUri = urlList.get(ix);
-			html = HtmlCache.getHtml(filingUri);
+			html = dao.getHtml(filingUri);
 //			newData=false;
 			if (html == null) {
 				for (int retries = 0; retries < 3; retries++) {
 					try {
 						details = Jsoup.connect(filingUri).get();
-						HtmlCache.putHtml(filingUri, details.outerHtml());
+						dao.putHtml(filingUri, details.outerHtml());
 //						newData=true;
 						html = details.outerHtml();
 						break;
@@ -448,7 +448,6 @@ public class Application extends Thread {
 
 		// flush db to disk then reload
 		System.err.println("HARVEST STOP: " + new Date());
-		HtmlCache.close();
 	}
 	
 	/**
@@ -479,10 +478,9 @@ public class Application extends Thread {
 		Set<String> urlList = new TreeSet<>();
 		int articleId=1;
 		String queryURI;
-		
-		HtmlCache.open();
-		articleId=HtmlCache.getMaxArticleId();
-		HtmlCache.close();
+
+		CacheDao dao = CacheDao.Instance.getCacheDao();
+		articleId=dao.getMaxArticleId();
 		int maxId=0;
 		Document indexPage = Jsoup.parse(new URL("http://www.cherokeephoenix.org/"), 30000);
 		Elements alist = indexPage.select("a");
