@@ -288,6 +288,7 @@ public class Application extends Thread {
 		FileUtils.writeLines(PDF_OUTPUT_REPORT, "UTF-8", lines);
 	}
 
+	@SuppressWarnings("unused")
 	private Map<String, Set<Article>> getPdfUrlArticleMap(List<Article> listOfArticles) {
 		Map<String, Set<Article>> pdfUrlsToArticles=new HashMap<>();
 		for (Article article: listOfArticles) {
@@ -401,6 +402,7 @@ public class Application extends Thread {
 			return hasEnoughCherokeeWords;
 		} catch (IOException | ParserConfigurationException e) {
 			System.out.println("\t"+localPdf.getName()+" "+false);
+			System.err.println(e.getMessage());
 			return false;
 		}
 	}
