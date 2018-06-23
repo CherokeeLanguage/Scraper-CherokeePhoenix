@@ -118,16 +118,20 @@ public interface CacheDao {
 		_createTable2Index2();
 	}
 	
-	@SqlUpdate("insert into " + TABLE_PDF + " (url, created) select *"
-			+ " from (select :url, NOW()) as X"
+	@SqlBatch("insert into " + TABLE_PDF //
+			+ " (url, created) select *"
+			+ " from (select cast(:url AS VARCHAR), NOW()) X"
 			+ " where not exists"
-			+ " (select :url from "+TABLE_PDF+" where url=:url)")
+			+ " (select cast(:url AS VARCHAR) from "+TABLE_PDF //
+			+" where url=cast(:url AS VARCHAR))")
 	void insertPdfUrl(@Bind("url") String url);
 	
-	@SqlBatch("insert into " + TABLE_PDF + " (url, created) select *"
-			+ " from (select :url, NOW()) as X"
+	@SqlBatch("insert into " + TABLE_PDF //
+			+ " (url, created) select *"
+			+ " from (select cast(:url AS VARCHAR), NOW()) X"
 			+ " where not exists"
-			+ " (select :url from "+TABLE_PDF+" where url=:url)")
+			+ " (select cast(:url AS VARCHAR) from "+TABLE_PDF //
+			+" where url=cast(:url AS VARCHAR))")
 	void insertPdfUrl(@Bind("url") Iterable<String> urls);
 	
 	@SqlUpdate("update " + TABLE_PDF + " set cherokee=:cherokee where url=:url")
