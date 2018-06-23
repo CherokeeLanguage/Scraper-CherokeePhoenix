@@ -31,7 +31,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
-import org.apache.commons.text.WordUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.fit.pdfdom.PDFDomTree;
 import org.jsoup.Jsoup;
@@ -395,9 +394,10 @@ public class Application extends Thread {
 				FileUtils.write(debugFileHtml, output.toString(), StandardCharsets.UTF_8);
 				FileUtils.write(debugFileChr, text, StandardCharsets.UTF_8);
 			}
-			int spaceCount = StringUtils.countMatches(text, " ");
+			int spaceCount = StringUtils.countMatches(text.trim(), " ");
+			int wordCount = spaceCount>0?spaceCount+1:0;
 			boolean hasEnoughCherokeeWords = spaceCount>5;
-			System.out.println("\t"+localPdf.getName()+" "+hasEnoughCherokeeWords+" ["+(spaceCount+1)+" words]");
+			System.out.println("\t"+localPdf.getName()+" "+hasEnoughCherokeeWords+" ["+wordCount+" words]");
 			return hasEnoughCherokeeWords;
 		} catch (IOException | ParserConfigurationException e) {
 			System.out.println("\t"+localPdf.getName()+" "+false);
