@@ -272,6 +272,36 @@ public class Article implements Comparable<Article> {
 	}
 
 	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((uri == null) ? 0 : uri.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (!(obj instanceof Article)) {
+			return false;
+		}
+		Article other = (Article) obj;
+		if (uri == null) {
+			if (other.uri != null) {
+				return false;
+			}
+		} else if (!uri.equals(other.uri)) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
 	public int compareTo(Article o) {
 		if (!_date.equals(o._date)) {
 			return _date.compareTo(o._date);

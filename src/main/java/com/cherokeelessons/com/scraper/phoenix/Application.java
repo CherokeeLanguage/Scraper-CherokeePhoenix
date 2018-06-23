@@ -17,8 +17,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
@@ -28,6 +30,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.commons.text.WordUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.fit.pdfdom.PDFDomTree;
@@ -77,7 +80,6 @@ public class Application extends Thread {
 		
 		extractDataFromHtml(urlList);
 		System.err.println("Processing complete at " + new Date());
-		Desktop.getDesktop().open(HTML_OUTPUT_REPORT);
 		Desktop.getDesktop().open(HTML_OUTPUT_REPORT.getParentFile());
 		try {
 			Thread.sleep(1000);
@@ -229,24 +231,29 @@ public class Application extends Thread {
 		FileUtils.writeLines(HTML_OUTPUT_REPORT, "UTF-8", lines);
 	}
 	
-	private void savePdfLinksDocument(List<Article> listOfArticles, List<String> chrLinks) throws IOException {
+	private void savePdfLinksDocument(List<Article> listOfAllArticles, List<String> chrLinks) throws IOException {
+		List<Article> listOfChrPdfArticles = new ArrayList<>(listOfAllArticles);
+		listOfChrPdfArticles.removeIf((a)->{
+			Set<String> pdfLinks = new TreeSet<>(a.getPdfLinks());
+			pdfLinks.retainAll(chrLinks);
+			return !pdfLinks.isEmpty();
+		});
+		Collections.sort(listOfChrPdfArticles);
+		Collections.reverse(listOfChrPdfArticles);
+		
 		List<String> lines=new ArrayList<String>();
 		System.out.println("Saving PDF URLS as an STEEMIT READY HTML document w/titles.");
 		lines.add("<html>");
 		String dateStr = new java.sql.Date(System.currentTimeMillis()).toString();
 		lines.add("<h2>ᏣᎳᎩ ᏧᎴᎯᏌᏅᎯ | ᏣᎳᎩ-ᏲᏁᎦ ᏗᎪᏪᎵ - PDFs - "+dateStr+"</h2>");
 		lines.add("<h3>Cherokee Phoenix | Cherokee-English Articles - PDFs - "+dateStr+"</h3>");
-		lines.add("<p>A total of "+NumberFormat.getInstance().format(listOfArticles.size())+" dual-language articles were found.");
-		lines.add("</p>");
-		lines.add("<p>");
-		lines.add(NumberFormat.getInstance().format(listOfArticles.stream().mapToInt(a->a.hasAudio()?1:0).sum()));
-		lines.add(" articles have links to audio. <em>Some audio files may be missing.</em>");
+		lines.add("<p>A total of "+NumberFormat.getInstance().format(chrLinks.size())+" dual-language PDFs were found.");
 		lines.add("</p>");
 		lines.add("<p>This list was generated using a custom scraping program written in Java.</p>");
 		lines.add("<ol>");
 		String d;
 		String articleId;
-		for (Article article: listOfArticles) {
+		for (Article article: listOfChrPdfArticles) {
 			String title = article.getTitle_chr();
 			if (StringUtils.isBlank(title)) {
 				title=article.getTitle_en();
@@ -261,16 +268,41 @@ public class Application extends Thread {
 			lines.add("<li><a href=\""+article.getUri()+"\">");
 			lines.add(title);
 			lines.add("</a>");
-			if (article.hasAudio()) {
-				lines.add(" [<a href='"+article.getAudioUrl()+"'><strong>AUDIO</strong>"+"</a>]");
+			lines.add(d+articleId);
+			lines.add("<ul>");
+			
+			for (String pdfLink: article.getPdfLinks()) {
+				String name = StringUtils.substringAfterLast(pdfLink, "/");
+				if (pdfLink.contains(" ")) {
+					pdfLink = pdfLink.replace(" ", "%20");
+				}
+				lines.add("<li>PDF: ");
+				lines.add("<a target='_blank' href='"+pdfLink+">"+StringEscapeUtils.escapeHtml4(name)+"</a>");
+				lines.add("</li>");
 			}
 			
-			lines.add(d+articleId);
+			lines.add("</ul>");
 			lines.add("</li>");
 		}
 		lines.add("</ol>");
 		lines.add("</html>");
 		FileUtils.writeLines(PDF_OUTPUT_REPORT, "UTF-8", lines);
+	}
+
+	private Map<String, Set<Article>> getPdfUrlArticleMap(List<Article> listOfArticles) {
+		Map<String, Set<Article>> pdfUrlsToArticles=new HashMap<>();
+		for (Article article: listOfArticles) {
+			if (!article.isPdf()) {
+				continue;
+			}
+			for (String pdfUrl: article.getPdfLinks()) {
+				if (!pdfUrlsToArticles.containsKey(pdfUrl)) {
+					pdfUrlsToArticles.put(pdfUrl, new TreeSet<>());
+				}
+				pdfUrlsToArticles.get(pdfUrl).add(article);
+			}
+		}
+		return pdfUrlsToArticles;
 	}
 
 	private void updateCherokeeLanguagePdfLinks(Collection<String> pdfLinks) {
