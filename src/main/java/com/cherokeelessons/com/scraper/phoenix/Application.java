@@ -396,7 +396,7 @@ public class Application extends Thread {
 			}
 			int spaceCount = StringUtils.countMatches(text.trim(), " ");
 			int wordCount = spaceCount>0?spaceCount+1:0;
-			boolean hasEnoughCherokeeWords = spaceCount>5;
+			boolean hasEnoughCherokeeWords = wordCount>5;
 			System.out.println("\t"+localPdf.getName()+" "+hasEnoughCherokeeWords+" ["+wordCount+" words]");
 			return hasEnoughCherokeeWords;
 		} catch (IOException | ParserConfigurationException e) {
