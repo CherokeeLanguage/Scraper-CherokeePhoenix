@@ -119,15 +119,15 @@ public interface CacheDao {
 	}
 	
 	@SqlUpdate("insert into " + TABLE_PDF + " (url, created) select *"
-			+ " from (select :url as url, NOW() as created) as X"
+			+ " from (select :url, NOW()) as X"
 			+ " where not exists"
-			+ " (select url: from "+TABLE_PDF+" where url=:url)")
+			+ " (select :url from "+TABLE_PDF+" where url=:url)")
 	void insertPdfUrl(@Bind("url") String url);
 	
 	@SqlBatch("insert into " + TABLE_PDF + " (url, created) select *"
-			+ " from (select :url as url, NOW() as created) as X"
+			+ " from (select :url, NOW()) as X"
 			+ " where not exists"
-			+ " (select url: from "+TABLE_PDF+" where url=:url)")
+			+ " (select :url from "+TABLE_PDF+" where url=:url)")
 	void insertPdfUrl(@Bind("url") Iterable<String> urls);
 	
 	@SqlUpdate("update " + TABLE_PDF + " set cherokee=:cherokee where url=:url")
