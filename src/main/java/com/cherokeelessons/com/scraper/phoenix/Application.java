@@ -33,7 +33,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.fit.pdfdom.PDFDomTree;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -241,7 +241,7 @@ public class Application extends Thread {
 		listOfChrPdfArticles.removeIf((a) -> {
 			Set<String> pdfLinks = new TreeSet<>(a.getPdfLinks());
 			pdfLinks.retainAll(chrLinks);
-			return !pdfLinks.isEmpty();
+			return pdfLinks.isEmpty();
 		});
 		Collections.sort(listOfChrPdfArticles);
 		Collections.reverse(listOfChrPdfArticles);
@@ -287,7 +287,7 @@ public class Application extends Thread {
 					pdfLink = pdfLink.replace(" ", "%20");
 				}
 				lines.add("<li>PDF: ");
-				lines.add("<a target='_blank' href='" + pdfLink + ">" + StringEscapeUtils.escapeHtml4(name) + "</a>");
+				lines.add("<a target='_blank' href='" + pdfLink + "'>" + StringEscapeUtils.escapeHtml4(name) + "</a>");
 				lines.add("</li>");
 			}
 
@@ -345,10 +345,10 @@ public class Application extends Thread {
 		while (debugIdx.length() < 4) {
 			debugIdx = "0" + debugIdx;
 		}
-		File debugFileHtml = new File(debug, debugIdx + "-full.html");
+		File debugFileTxt = new File(debug, debugIdx + "-full.txt");
 		File debugFileChr = new File(debug, debugIdx + "-chr.txt");
 		try (PDDocument pdf = PDDocument.load(localPdf)) {
-			PDFDomTree parser = new PDFDomTree();
+			PDFTextStripper parser = new PDFTextStripper();
 			StringWriter output = new StringWriter();
 			parser.writeText(pdf, output);
 			// Document pdfHtml = Jsoup.parse(output.toString());
@@ -404,7 +404,7 @@ public class Application extends Thread {
 
 			if (!text.trim().isEmpty()) {
 				FileUtils.copyFile(localPdf, new File(debug, localPdf.getName()));
-				FileUtils.write(debugFileHtml, output.toString(), StandardCharsets.UTF_8);
+				FileUtils.write(debugFileTxt, output.toString(), StandardCharsets.UTF_8);
 				FileUtils.write(debugFileChr, text, StandardCharsets.UTF_8);
 			}
 			int spaceCount = StringUtils.countMatches(text.trim(), " ");
@@ -412,7 +412,7 @@ public class Application extends Thread {
 			boolean hasEnoughCherokeeWords = wordCount > 5;
 			System.out.println("\t" + localPdf.getName() + " " + hasEnoughCherokeeWords + " [" + wordCount + " words]");
 			return hasEnoughCherokeeWords;
-		} catch (IOException | ParserConfigurationException e) {
+		} catch (IOException e) {
 			System.out.println("\t" + localPdf.getName() + " " + false);
 			System.err.println(e.getMessage());
 			return false;
