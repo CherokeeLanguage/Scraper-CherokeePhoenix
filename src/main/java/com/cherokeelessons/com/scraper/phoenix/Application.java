@@ -27,8 +27,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ForkJoinPool;
 
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
