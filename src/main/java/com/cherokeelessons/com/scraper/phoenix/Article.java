@@ -82,7 +82,7 @@ public class Article implements Comparable<Article> {
 
 	private boolean cherokee = false;
 	private boolean pdf = false;
-	private Set<String> pdfLinks=new TreeSet<>();
+	private Set<String> pdfLinks = new TreeSet<>();
 
 	private String title_chr = "";
 
@@ -104,8 +104,7 @@ public class Article implements Comparable<Article> {
 		try {
 			_date = sdf.parse(date);
 		} catch (ParseException e) {
-			String message = "MISSING/BAD DATE: " + getArticleId() + "=> "
-					+jhtml.select("div.authors").html();
+			String message = "MISSING/BAD DATE: " + getArticleId() + "=> " + jhtml.select("div.authors").html();
 			throw new RuntimeException(message);
 		}
 	}
@@ -139,7 +138,7 @@ public class Article implements Comparable<Article> {
 	public boolean isCherokee() {
 		return cherokee;
 	}
-	
+
 	public boolean isPdf() {
 		return pdf;
 	}
@@ -154,7 +153,7 @@ public class Article implements Comparable<Article> {
 		setBody_chr(jhtml);
 		setAudio_info(jhtml);
 		Elements pdfLinks = jhtml.select("a[href$=pdf]");
-		for (Element pdfLink: pdfLinks) {
+		for (Element pdfLink : pdfLinks) {
 			String absUrl = pdfLink.absUrl("href");
 			if (absUrl.toLowerCase().contains("cherokeephoenix.org/")) {
 				getPdfLinks().add(absUrl);
@@ -165,6 +164,9 @@ public class Article implements Comparable<Article> {
 
 	private void setAudio_info(Document jhtml) {
 		Element audio = jhtml.select("div.article-single-contents div.media div.audioArea").first();
+		if (audio == null) {
+			audio = jhtml.select("div.audioArea").first();
+		}
 		if (audio == null) {
 			return;
 		}
@@ -209,17 +211,26 @@ public class Article implements Comparable<Article> {
 
 	private void setTitles(Document jhtml) {
 		Element title;
-		title = jhtml.select("div.article-single h2").first();
-		if (title != null)
-			title_en = title.text();
-		else
-			title_en = "";
+		
+		title_en="";
+		title_chr = "";
+		
+		title = jhtml.select("h2.content-header-article").first();
+		if (title != null) {
+			title_en = title.text().trim();
+		}
+		
+		if (!title_en.isEmpty()) {
+			title = jhtml.select("div.article-single h2").first();
+			if (title != null) {
+				title_en = title.text().trim();
+			}
+		}
 
 		title = jhtml.select("div.translation h2").first();
-		if (title != null)
-			title_chr = title.text();
-		else
-			title_chr = "";
+		if (title != null) {
+			title_chr = title.text().trim();
+		}
 	}
 
 	public void setUri(String uri) {
