@@ -49,8 +49,9 @@ public class Application extends Thread {
 
 	private final long timeLimit = 4 * hours; // in ms
 
-	private static final String BASE_URL = "http://www.cherokeephoenix.org";
-	private static final String ARTICLE_PATH = "/Article/Index/";
+	private static final String BASE_URL = "https://www.cherokeephoenix.org";
+	private static final String ARTICLE_PATH_A = "/Article/index/";
+	private static final String ARTICLE_PATH_B = "/Article/Index/";
 
 	@Override
 	public void run() {
@@ -580,11 +581,11 @@ public class Application extends Thread {
 				if (!a.hasAttr("href")) {
 					continue;
 				}
-				String href = a.attr("href");
-				if (!href.contains("Article/index/")) {
+				String lcHref = a.attr("href").toLowerCase();
+				if (!lcHref.contains("article/index/")) {
 					continue;
 				}
-				String number = StringUtils.substringAfterLast(href, "Article/index/");
+				String number = StringUtils.substringAfterLast(lcHref, "article/index/");
 				maxId = Math.max(Integer.valueOf(number), maxId);
 			}
 		}
@@ -598,11 +599,15 @@ public class Application extends Thread {
 		System.out.println(" - scanning for new valid article ids");
 		do {
 			articleId++;
-			queryURI = BASE_URL + ARTICLE_PATH + String.valueOf(articleId);// +queryURIB;
-			if (httpExists(queryURI)) {
-				urlList.add(BASE_URL + ARTICLE_PATH + String.valueOf(articleId));// +queryURIB);
-				System.out.println(" - articleId: " + articleId);
+			queryURI = BASE_URL + ARTICLE_PATH_A + String.valueOf(articleId);// +queryURIB;
+			if (!httpExists(queryURI)) {
+				queryURI = BASE_URL + ARTICLE_PATH_B + String.valueOf(articleId);// +queryURIB;
 			}
+			if (!httpExists(queryURI)) {
+				continue;
+			}
+			urlList.add(queryURI);
+			System.out.println(" - articleId: " + articleId);
 		} while (articleId < maxId);
 
 		System.out.println("CALCULATED URI LIST: (urls) " + urlList.size());
