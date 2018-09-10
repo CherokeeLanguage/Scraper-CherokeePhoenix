@@ -212,24 +212,29 @@ public class Article implements Comparable<Article> {
 	private void setTitles(Document jhtml) {
 		Element title;
 		
-		title_en="";
-		title_chr = "";
-		
-		title = jhtml.select("h2.content-header-article").first();
-		if (title != null) {
-			title_en = title.text().trim();
-		}
-		
-		if (!title_en.isEmpty()) {
+		setEnglishTitle: {
+			title = jhtml.select("h2.content-header-article").first();
+			if (title != null) {
+				title_en = title.text().trim();
+				break setEnglishTitle;
+			}
+			
 			title = jhtml.select("div.article-single h2").first();
 			if (title != null) {
 				title_en = title.text().trim();
+				break setEnglishTitle;
 			}
+			
+			title_en="";
 		}
-
-		title = jhtml.select("div.translation h2").first();
-		if (title != null) {
-			title_chr = title.text().trim();
+		
+		setCherokeeTitle: {
+			title = jhtml.select("div.translation h2").first();
+			if (title != null) {
+				title_chr = title.text().trim();
+				break setCherokeeTitle;
+			}
+			title_chr = "";
 		}
 	}
 
