@@ -187,7 +187,7 @@ public class Application extends Thread {
 	}
 
 	private void saveArticleLinksDocument(List<Article> listOfArticles) throws IOException {
-		List<String> lines = new ArrayList<String>();
+		List<String> lines = new ArrayList<>();
 		System.out.println("Saving URLS as an STEEMIT READY HTML document w/titles.");
 		lines.add("<html>");
 		String dateStr = new java.sql.Date(System.currentTimeMillis()).toString();
@@ -245,7 +245,7 @@ public class Application extends Thread {
 		Collections.sort(listOfChrPdfArticles);
 		Collections.reverse(listOfChrPdfArticles);
 
-		List<String> lines = new ArrayList<String>();
+		List<String> lines = new ArrayList<>();
 		System.out.println("Saving PDF URLS as an STEEMIT READY HTML document w/titles.");
 		lines.add("<html>");
 		String dateStr = new java.sql.Date(System.currentTimeMillis()).toString();
@@ -509,7 +509,11 @@ public class Application extends Thread {
 			if (html == null) {
 				for (int retries = 0; retries < 3; retries++) {
 					try {
-						details = Jsoup.connect(filingUri).get();
+						while (httpRequestRateLimit>System.currentTimeMillis()) {
+							sleep(100);
+						}
+						details = Jsoup.connect(filingUri).timeout(5000).get();
+						httpRequestRateLimit = System.currentTimeMillis()+1000/4;
 						dao.putHtml(filingUri, details.outerHtml());
 						// newData=true;
 						html = details.outerHtml();
@@ -531,7 +535,7 @@ public class Application extends Thread {
 				// System.err.println("FAILED: "+filingUri);
 				continue;
 			}
-			newPercent = (100 * ix / urlList.size());
+			newPercent = 100 * ix / urlList.size();
 			if (newPercent != lastPercent) {
 				System.out.println("HARVEST " + newPercent + "% complete.");
 				lastPercent = newPercent;
@@ -556,14 +560,18 @@ public class Application extends Thread {
 			// HttpURLConnection.setInstanceFollowRedirects(false)
 			HttpURLConnection con = (HttpURLConnection) new URL(URLName).openConnection();
 			con.setRequestMethod("HEAD");
+			while (httpRequestRateLimit > System.currentTimeMillis()) {
+				Thread.sleep(100);
+			}
 			boolean b = con.getResponseCode() == HttpURLConnection.HTTP_OK;
-			// System.out.println("URLName: "+URLName+" ["+b+"]");
+			httpRequestRateLimit = System.currentTimeMillis() + 1000/4;
 			return b;
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
 		}
 	}
+	private static long httpRequestRateLimit = 0;
 
 	private Set<String> loadSeedUrls() throws MalformedURLException, IOException {
 		System.err.println("Loading initial URLS: " + new Date());
@@ -602,9 +610,9 @@ public class Application extends Thread {
 			queryURI = BASE_URL + ARTICLE_PATH_A + String.valueOf(articleId);// +queryURIB;
 			if (!httpExists(queryURI)) {
 				queryURI = BASE_URL + ARTICLE_PATH_B + String.valueOf(articleId);// +queryURIB;
-			}
-			if (!httpExists(queryURI)) {
-				continue;
+				if (!httpExists(queryURI)) {
+					continue;
+				}
 			}
 			urlList.add(queryURI);
 			System.out.println(" - articleId: " + articleId);
