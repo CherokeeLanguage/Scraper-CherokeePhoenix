@@ -70,6 +70,7 @@ public class Application extends Thread {
 		List<String> urlList;
 		do {
 			urlList = new ArrayList<>(loadSeedUrls(15));
+			repeat = !urlList.isEmpty();
 			dao.resetMaybeBadScrapes();
 			urlList.addAll(dao.forRescraping());
 			performHarvest(urlList);
