@@ -8,6 +8,7 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLDecoder;
@@ -554,11 +555,15 @@ public class Application extends Thread {
 	 * @return
 	 */
 	public static boolean httpExists(String URLName) {
+		int retries=10;
+		while (retries-->0) {
 		try {
 			HttpURLConnection.setFollowRedirects(false);
 			// note : you may also need
 			// HttpURLConnection.setInstanceFollowRedirects(false)
 			HttpURLConnection con = (HttpURLConnection) new URL(URLName).openConnection();
+			con.setConnectTimeout(500);
+			con.setReadTimeout(500);
 			con.setRequestMethod("HEAD");
 			while (httpRequestRateLimit > System.currentTimeMillis()) {
 				Thread.sleep(100);
@@ -566,10 +571,15 @@ public class Application extends Thread {
 			boolean b = con.getResponseCode() == HttpURLConnection.HTTP_OK;
 			httpRequestRateLimit = System.currentTimeMillis() + 1000/4;
 			return b;
+		} catch (SocketTimeoutException e) {
+			System.err.println(e.getMessage());
+			httpRequestRateLimit = System.currentTimeMillis() + 30000;
+			continue;
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
-		}
+		}}
+		return false;
 	}
 	private static long httpRequestRateLimit = 0;
 
