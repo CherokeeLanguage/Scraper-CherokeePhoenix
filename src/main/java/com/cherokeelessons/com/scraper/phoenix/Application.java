@@ -66,19 +66,21 @@ public class Application extends Thread {
 
 	private void _run() throws IOException {
 		CacheDao dao = CacheDao.Instance.getCacheDao();
+		boolean repeat = true;
 		List<String> urlList;
-		urlList = new ArrayList<>(loadSeedUrls());
-		dao.resetMaybeBadScrapes();
-		urlList.addAll(dao.forRescraping());
-		performHarvest(urlList);
+		do {
+			urlList = new ArrayList<>(loadSeedUrls(15));
+			dao.resetMaybeBadScrapes();
+			urlList.addAll(dao.forRescraping());
+			performHarvest(urlList);
+			urlList = dao.getUrls();
+			System.err.println("========================================================");
+			System.out.println("Processing " + urlList.size() + " cached articles.");
+			System.err.println("========================================================");
 
-		urlList = dao.getUrls();
+			extractDataFromHtml(urlList);
+		} while (repeat);
 
-		System.err.println("========================================================");
-		System.out.println("Processing " + urlList.size() + " cached articles.");
-		System.err.println("========================================================");
-
-		extractDataFromHtml(urlList);
 		System.err.println("Processing complete at " + new Date());
 		Desktop.getDesktop().open(HTML_OUTPUT_REPORT.getParentFile());
 		try {
@@ -510,11 +512,11 @@ public class Application extends Thread {
 			if (html == null) {
 				for (int retries = 0; retries < 3; retries++) {
 					try {
-						while (httpRequestRateLimit>System.currentTimeMillis()) {
+						while (httpRequestRateLimit > System.currentTimeMillis()) {
 							sleep(100);
 						}
 						details = Jsoup.connect(filingUri).timeout(5000).get();
-						httpRequestRateLimit = System.currentTimeMillis()+1000/4;
+						httpRequestRateLimit = System.currentTimeMillis() + 1000 / 4;
 						dao.putHtml(filingUri, details.outerHtml());
 						// newData=true;
 						html = details.outerHtml();
@@ -555,35 +557,37 @@ public class Application extends Thread {
 	 * @return
 	 */
 	public static boolean httpExists(String URLName) {
-		int retries=10;
-		while (retries-->0) {
-		try {
-			HttpURLConnection.setFollowRedirects(false);
-			// note : you may also need
-			// HttpURLConnection.setInstanceFollowRedirects(false)
-			HttpURLConnection con = (HttpURLConnection) new URL(URLName).openConnection();
-			con.setConnectTimeout(500);
-			con.setReadTimeout(500);
-			con.setRequestMethod("HEAD");
-			while (httpRequestRateLimit > System.currentTimeMillis()) {
-				Thread.sleep(100);
+		int retries = 10;
+		while (retries-- > 0) {
+			try {
+				HttpURLConnection.setFollowRedirects(false);
+				// note : you may also need
+				// HttpURLConnection.setInstanceFollowRedirects(false)
+				HttpURLConnection con = (HttpURLConnection) new URL(URLName).openConnection();
+				con.setConnectTimeout(500);
+				con.setReadTimeout(500);
+				con.setRequestMethod("HEAD");
+				while (httpRequestRateLimit > System.currentTimeMillis()) {
+					Thread.sleep(100);
+				}
+				boolean b = con.getResponseCode() == HttpURLConnection.HTTP_OK;
+				httpRequestRateLimit = System.currentTimeMillis() + 1000 / 8;
+				return b;
+			} catch (SocketTimeoutException e) {
+				System.err.println(e.getMessage());
+				httpRequestRateLimit = System.currentTimeMillis() + 1000;
+				continue;
+			} catch (Exception e) {
+				e.printStackTrace();
+				return false;
 			}
-			boolean b = con.getResponseCode() == HttpURLConnection.HTTP_OK;
-			httpRequestRateLimit = System.currentTimeMillis() + 1000/4;
-			return b;
-		} catch (SocketTimeoutException e) {
-			System.err.println(e.getMessage());
-			httpRequestRateLimit = System.currentTimeMillis() + 30000;
-			continue;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
-		}}
+		}
 		return false;
 	}
+
 	private static long httpRequestRateLimit = 0;
 
-	private Set<String> loadSeedUrls() throws MalformedURLException, IOException {
+	private Set<String> loadSeedUrls(int maxUrls) throws MalformedURLException, IOException {
 		System.err.println("Loading initial URLS: " + new Date());
 		Set<String> urlList = new TreeSet<>();
 		int articleId = 1;
@@ -621,13 +625,14 @@ public class Application extends Thread {
 			if (!httpExists(queryURI)) {
 				queryURI = BASE_URL + ARTICLE_PATH_B + String.valueOf(articleId);// +queryURIB;
 				if (!httpExists(queryURI)) {
-					System.out.println(" - articleId: " + articleId+" [no article]");
+					System.out.println(" - articleId: " + articleId + " [no article]");
 					continue;
 				}
 			}
 			urlList.add(queryURI);
 			System.out.println(" - articleId: " + articleId);
-		} while (articleId < maxId);
+			maxUrls--;
+		} while (articleId < maxId && maxUrls > 0);
 
 		System.out.println("CALCULATED URI LIST: (urls) " + urlList.size());
 		return urlList;
