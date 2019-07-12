@@ -611,6 +611,7 @@ public class Application extends Thread {
 			if (!httpExists(queryURI)) {
 				queryURI = BASE_URL + ARTICLE_PATH_B + String.valueOf(articleId);// +queryURIB;
 				if (!httpExists(queryURI)) {
+					System.out.println(" - articleId: " + articleId+" [no article]");
 					continue;
 				}
 			}
