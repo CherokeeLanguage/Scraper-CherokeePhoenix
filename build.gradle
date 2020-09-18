@@ -39,21 +39,25 @@ configurations {
 }
 
 dependencies {
-	compile 'commons-cli:commons-cli:+'
-	compile 'org.apache.commons:commons-lang3:+'
-	compile 'org.apache.commons:commons-text:+'
-	compile 'org.jsoup:jsoup:1.11.+'
-	compile 'commons-io:commons-io:+'
+	// https://mvnrepository.com/artifact/com.googlecode.lanterna/lanterna
+	implementation 'com.googlecode.lanterna:lanterna:3.0.3'
+
+
+	implementation 'commons-cli:commons-cli:+'
+	implementation 'org.apache.commons:commons-lang3:+'
+	implementation 'org.apache.commons:commons-text:+'
+	implementation 'org.jsoup:jsoup:1.11.+'
+	implementation 'commons-io:commons-io:+'
 	
-	compile 'net.sf.cssbox:pdf2dom:+'
-	compile 'com.levigo.jbig2:levigo-jbig2-imageio:2.0'
+	implementation 'net.sf.cssbox:pdf2dom:+'
+	implementation 'com.levigo.jbig2:levigo-jbig2-imageio:2.0'
   
 	//required slf4j stuff
-	compile 'org.slf4j:slf4j-jdk14:1.8.+'
+	implementation 'org.slf4j:slf4j-jdk14:1.8.+'
 	//database
-	compile 'com.h2database:h2:1.4.+'
-	compile 'org.jdbi:jdbi3-core:+'
-	compile 'org.jdbi:jdbi3-sqlobject:+'
+	implementation 'com.h2database:h2:1.4.+'
+	implementation 'org.jdbi:jdbi3-core:+'
+	implementation 'org.jdbi:jdbi3-sqlobject:+'
 }
  
 sourceSets {
