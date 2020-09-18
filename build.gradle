@@ -1,22 +1,24 @@
 plugins {
-  id "us.kirchmeier.capsule" version "1.0.2"
+  id "it.gianluz.capsule" version "1.0.3"
 }
+
 apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'eclipse-wtp'
 apply plugin: 'maven'
 
-group "com.github.michael-joyner"
+group "com.github.CherokeeLanguage"
 
-version = '20180516'
+version = '20200918'
 
-sourceCompatibility = 1.8
-compileJava.options.encoding = 'UTF-8'
-
-def RTJAR = '/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/rt.jar';
-if (new File(RTJAR).exists()) {
-	compileJava.options.bootClasspath=RTJAR
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
+compileJava {
+    options.release = 11
 }
+
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
 
 task fatjar(type: FatCapsule) {
 	//-Dfile.encoding=UTF-8
@@ -42,8 +44,6 @@ dependencies {
 	compile 'org.apache.commons:commons-text:+'
 	compile 'org.jsoup:jsoup:1.11.+'
 	compile 'commons-io:commons-io:+'
-	
-	compile 'com.github.CherokeeLanguage:SimpleTextUi:-SNAPSHOT'
 	
 	compile 'net.sf.cssbox:pdf2dom:+'
 	compile 'com.levigo.jbig2:levigo-jbig2-imageio:2.0'
@@ -79,70 +79,34 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 
 artifacts {
     archives sourcesJar
-    archives javadocJar
 }
 
-configurations.all {
-    resolutionStrategy.cacheChangingModulesFor 30, 'seconds'
-}
-
-
-task "create-dirs" << {
+task "create-dirs" {
+	doLast {
 	sourceSets*.java.srcDirs*.each { it.mkdirs() }
 	sourceSets*.resources.srcDirs*.each { it.mkdirs() }
+	}
 }
 
-eclipseJdt << {
+eclipseJdt {
+	doLast {
     File f = file('.settings/org.eclipse.core.resources.prefs')
     f.write('eclipse.preferences.version=1\n')
     f.append('encoding/<project>=utf-8')
     f = file('.settings/org.eclipse.core.runtime.prefs')
     f.write('eclipse.preferences.version=1\n')
     f.append('line.separator=\\n\n')
-}
-
-project.afterEvaluate {
-	// use jre lib matching version used by project, not the workspace default
-	if (sourceCompatibility != null) {
-		def target = project.sourceCompatibility.toString()
-		def containerPrefix = "org.eclipse.jdt.launching.JRE_CONTAINER"
-		def containerSuffix
-		if (target =~ /1.[4-5]/) {
-			containerSuffix = '/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-' + target
-		} else if (target =~ /1.[6-8]/) {
-			containerSuffix = '/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-' + target
-		}
-		if (containerSuffix != null) {
-			project.eclipse.classpath {
-				containers.removeAll { it.startsWith(containerPrefix) }
-				containers.add(containerPrefix + containerSuffix)
-			}
-		}
 	}
 }
 
 eclipse {
 	project {
 		name = 'Scraper-CherokeePhoenix'
-		natures 'org.eclipse.buildship.core.gradleprojectnature'
-		//referencedProjects 'SimpleTextUi'
 	}
 
 	classpath {
 		plusConfigurations += [configurations.provided]
 		downloadSources = true
 		downloadJavadoc = true
-	}
-
-	jdt {
-		sourceCompatibility=1.8
-		targetCompatibility=1.8
-	}
-
-	wtp {
-		facet {
-			facets = []
-			facet name: 'jst.java', version: '1.8'
-		}
 	}
 }
