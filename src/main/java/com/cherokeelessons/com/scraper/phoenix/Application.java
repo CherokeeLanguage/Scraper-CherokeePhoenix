@@ -61,11 +61,8 @@ public class Application {
 	}
 
 	public void run() throws MalformedURLException, IOException {
-		terminal.bell();
 		terminal.clearScreen();
-		System.out.println("Database Loading");
 		CacheDao dao = CacheDao.Instance.getCacheDao();
-		System.out.println("Database Loaded");
 		boolean repeat = true;
 		List<String> urlList;
 		do {
@@ -78,15 +75,14 @@ public class Application {
 			System.err.println("========================================================");
 			System.out.println("Processing " + urlList.size() + " cached articles.");
 			System.err.println("========================================================");
-
 			extractDataFromHtml(urlList);
 		} while (repeat);
 
 		System.err.println("Processing complete at " + new Date());
-		Desktop.getDesktop().open(HTML_OUTPUT_REPORT.getParentFile());
 		try {
+			Desktop.getDesktop().open(HTML_OUTPUT_REPORT.getParentFile());
 			Thread.sleep(1000);
-		} catch (InterruptedException e) {
+		} catch (IOException | InterruptedException e) {
 		}
 	}
 
