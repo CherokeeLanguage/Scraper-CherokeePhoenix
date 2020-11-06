@@ -81,15 +81,22 @@ public class LaternaTest {
 	}
 
 	protected static void scroll(Terminal terminal) throws IOException {
-		TextGraphics tg = terminal.newTextGraphics();
-		for (int row=1; row<terminal.getTerminalSize().getRows(); row++) {
-			int prevRow = row - 1;
-			for (int col=0; col<terminal.getTerminalSize().getColumns(); col++) {
-				TextCharacter c = tg.getCharacter(col, row);
-				tg.setCharacter(col, prevRow, c);
-			}
-		}
-		terminal.setCursorPosition(0, terminal.getTerminalSize().getRows()-2);
+		terminal.putCharacter((char) 27);
+		terminal.putCharacter('[');
+		terminal.putCharacter('r');
+		terminal.flush();
+		terminal.putCharacter((char) 27);
+		terminal.putCharacter('M');
+		terminal.flush();
+//		TextGraphics tg = terminal.newTextGraphics();
+//		for (int row=1; row<terminal.getTerminalSize().getRows(); row++) {
+//			int prevRow = row - 1;
+//			for (int col=0; col<terminal.getTerminalSize().getColumns(); col++) {
+//				TextCharacter c = tg.getCharacter(col, row);
+//				tg.setCharacter(col, prevRow, c);
+//			}
+//		}
+//		terminal.setCursorPosition(0, terminal.getTerminalSize().getRows()-2);
 	}
 }
 

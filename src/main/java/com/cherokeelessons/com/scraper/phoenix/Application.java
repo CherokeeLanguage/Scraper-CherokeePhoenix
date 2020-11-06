@@ -39,7 +39,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import com.cherokeelessons.com.scraper.phoenix.db.CacheDao;
-import com.googlecode.lanterna.terminal.Terminal;
 
 public class Application {
 	private static final File PDF_CACHE = new File("/var/tmp/CherokeePhoenix-pdfCache");
@@ -50,18 +49,15 @@ public class Application {
 	final private long hours = 60 * minutes;
 
 	private final long timeLimit = 4 * hours; // in ms
-	private Terminal terminal;
 
 	private static final String BASE_URL = "https://www.cherokeephoenix.org";
 	private static final String ARTICLE_PATH_A = "/Article/index/";
 	private static final String ARTICLE_PATH_B = "/Article/Index/";
 
-	public Application(Terminal terminal) {
-		this.terminal = terminal;
+	public Application() {
 	}
 
 	public void run() throws MalformedURLException, IOException {
-		terminal.clearScreen();
 		CacheDao dao = CacheDao.Instance.getCacheDao();
 		boolean repeat = true;
 		List<String> urlList;

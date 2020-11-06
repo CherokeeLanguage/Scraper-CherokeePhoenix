@@ -39,10 +39,6 @@ configurations {
 }
 
 dependencies {
-	// https://mvnrepository.com/artifact/com.googlecode.lanterna/lanterna
-	compile 'com.googlecode.lanterna:lanterna:3.0.3'
-
-
 	compile 'commons-cli:commons-cli:+'
 	compile 'org.apache.commons:commons-lang3:+'
 	compile 'org.apache.commons:commons-text:+'
