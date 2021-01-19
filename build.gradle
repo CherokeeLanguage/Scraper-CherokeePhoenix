@@ -43,7 +43,7 @@ dependencies {
 	compile 'org.apache.commons:commons-lang3:+'
 	compile 'org.apache.commons:commons-text:+'
 	compile 'org.jsoup:jsoup:1.11.+'
-	compile 'commons-io:commons-io:+'
+	compile 'commons-io:commons-io:2.+'
 	
 	compile 'net.sf.cssbox:pdf2dom:+'
 	compile 'com.levigo.jbig2:levigo-jbig2-imageio:2.0'
